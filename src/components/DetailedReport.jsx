@@ -4,7 +4,6 @@ import { TbDelta } from "react-icons/tb";
 
 function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
     const showDiff = false;
-    console.log(filteredData)
 
     return (
         <div className="all-ways">

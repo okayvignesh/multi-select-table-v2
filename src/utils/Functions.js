@@ -110,7 +110,6 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
                 fsiValue = 'Null';
             }
 
-            // Simply store statusKey directly on the group object
             dateGroups[formattedDate][groupKey][statusKey] = {
                 gbi: item.GBI_Cnt,
                 aos: item.AOS_Cnt,
@@ -119,7 +118,6 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
         }
     });
 
-    // Fill missing statuses
     Object.keys(dateGroups).forEach(date => {
         const groupData = dateGroups[date];
 
@@ -153,7 +151,6 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
     }));
 
     setFilteredData(finalResult);
-    console.log(finalResult)
     pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions })
     calculateTotals({ data: finalResult, setTotalData, setSummaryWTB });
 };

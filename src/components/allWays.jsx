@@ -6,8 +6,6 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
 
     const clearedWTB = summaryWTB && summaryWTB.length ? summaryWTB.map(text => text.replace(/\s*\(.*?\)/g, '')).join(', ') : '';
 
-    console.log('totalData', totalData);
-
     return (
         <div className="all-ways">
             <p className="title">Ways to Buy &nbsp;
