@@ -178,7 +178,8 @@
     height: calc(100vh - 145px);
 }
 
-.summary {
+.summary,
+.detailed {
     padding: 20px;
 
     .card-container {
@@ -187,12 +188,18 @@
         padding: 10px;
         margin: 10px 0;
         box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+        overflow-x: scroll;
+        height: fit-content;
     }
 
 
     .all-ways {
+        margin-bottom: 3rem;
+        margin-top: 10px;
+
         .title {
             font-weight: 600;
+            padding-left: 10px;
             font-size: 20px;
             color: black;
 
@@ -215,6 +222,130 @@
         justify-content: space-between;
     }
 }
+
+.footer {
+    background-color: white;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    padding: 10px;
+    box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px 0px inset;
+    display: flex;
+    justify-content: space-around;
+    font-weight: 400;
+
+    .footer-box {
+        p {
+            margin: 0 !important;
+            font-size: 12px;
+        }
+
+        .muted {
+            color: #6c757d;
+        }
+
+        width: 25%;
+        border-right: 1px solid gray;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        &:last-child {
+            border-right: none;
+        }
+    }
+}
+
+
+.table-container {
+    padding: 20px;
+    display: flex;
+    font-size: 14px;
+
+    .left-table,
+    .right-table table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .left-table {
+        .corner-left {
+            text-align: start;
+            padding: 10px;
+            vertical-align: text-top;
+        }
+    }
+
+    th,
+    td {
+        border: 1px solid #ccc;
+        height: 25px;
+        line-height: 25px;
+        padding: 0;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .fixed-height-header {
+        height: 40px !important;
+    }
+
+    .td-parent .td-div {
+        height: 25px;
+        line-height: 25px;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        padding: 0px 10px;
+    }
+
+    .td-parent .td-div:last-child {
+        border-bottom: none;
+    }
+
+    .right-table {
+        overflow-x: auto;
+        display: flex;
+
+        .till-day-class {
+            height: 30px;
+
+            th {
+                background: #283b51;
+                color: white;
+            }
+
+        }
+
+        .right-parent-th {
+            display: flex;
+            width: 100%;
+            height: 25px;
+            line-height: 25px;
+            border-bottom: 1px solid #ccc;
+            border-bottom: none !important;
+
+            .right-th,
+            .right-th-body {
+                flex: 1;
+                border-right: 1px solid #ccc;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 25px;
+                line-height: 25px;
+            }
+
+            .right-th:last-child,
+            .right-th-body:last-child {
+                border-right: none;
+            }
+        }
+    }
+}
+
 
 body {
     padding: 0;
@@ -249,4 +380,21 @@ button {
 .small-text {
     font-size: 12px;
     color: #6c757d;
+}
+
+.empty-row {
+    height: 30.73px;
+    border: none;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.corner-left-right {
+    text-align: start !important;
+    padding: 0 10px !important;
+    justify-content: start !important;
 }

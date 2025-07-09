@@ -1,13 +1,10 @@
+import AllWays from "./allWays"
 
-function Summary() {
+function Summary({ appliedFilters, totalData, loading, filteredData, tillDates, summaryWTB }) {
   return (
     <div className="summary">
-      <div className="all-ways">
-        <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
-        <div className="card-container">
-
-        </div>
-      </div>
+      <AllWays appliedFilters={appliedFilters} totalData={totalData} loading={loading} filteredData={filteredData} tillDates={tillDates} allFlag={false} summaryWTB={summaryWTB} />
+      <AllWays appliedFilters={appliedFilters} totalData={totalData} loading={loading} filteredData={filteredData} tillDates={tillDates} allFlag={true} />
     </div>
   )
 }

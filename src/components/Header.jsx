@@ -4,18 +4,11 @@ import { useEffect, useState } from 'react';
 import HeaderDropdown from './HeaderDropdown';
 
 
-function Header({ dateOptions, setDateOptions }) {
+function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData }) {
   const [loading, setLoading] = useState(false);
-  const [countries, setCountries] = useState([]);
-  const [waysToBuy, setWaysToBuy] = useState([]);
   const [filter1, setFilter1] = useState([]);
   const [filter3, setFilter3] = useState([]);
   const [filter2, setFilter2] = useState(null);
-  const [appliedFilters, setAppliedFilters] = useState({
-    filter1: [],
-    filter2: null,
-    filter3: []
-  });
 
   // API CALL FOR GEO DROPDOWN
   const fetchGeoDropdownData = () => {
@@ -53,14 +46,11 @@ function Header({ dateOptions, setDateOptions }) {
 
   const handleAsofDateChange = (date) => {
     setFilter2(date.label);
-    setAppliedFilters(prev => ({
-      ...prev,
-      filter2: date.label
-    }));
   };
 
   const handleApply = () => {
     setAppliedFilters({ filter1, filter2, filter3 });
+    fetchRowData();
   };
 
   const handleReset = () => {
@@ -77,6 +67,7 @@ function Header({ dateOptions, setDateOptions }) {
       filter3: waysToBuy.map((i) => i.id),
     });
   }
+
 
   return (
     <>

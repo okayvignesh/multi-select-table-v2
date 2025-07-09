@@ -1,19 +1,9 @@
-import { useEffect, useState } from 'react';
-import { getTillDates } from "../utils/Functions";
 import TillDateDropdown from './TillDateDropdown';
 
-function SecondaryHeader({ setActiveTab, activeTab, dateOptions }) {
-    const [tillDates, setTillDates] = useState([]);
-
+function SecondaryHeader({ setActiveTab, activeTab, tillDateOptions, setTillDates }) {
     const handleTabClick = (tabName) => {
         setActiveTab(tabName);
-    };
-
-    useEffect(() => {
-        if (dateOptions.length === 0) return;
-        setTillDates(getTillDates(dateOptions, true));
-    }, [dateOptions]);
-
+    }
 
     return (
         <div className="secondary-header">
@@ -42,7 +32,7 @@ function SecondaryHeader({ setActiveTab, activeTab, dateOptions }) {
 
             <div className="mb-3">
                 <label htmlFor="exampleFormControlInput1" className="form-label">Data</label>
-                <TillDateDropdown options={tillDates} />
+                <TillDateDropdown setTillDates={setTillDates} tillDateOptions={tillDateOptions} />
             </div>
         </div>
     )

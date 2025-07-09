@@ -1,7 +1,10 @@
+import DetailedReport from "./DetailedReport"
 
-function Detailed() {
+function Detailed({ appliedFilters, loading, filteredData, tillDates}) {
     return (
-        <div>Detailed</div>
+        <div className="detailed">
+            <DetailedReport appliedFilters={appliedFilters} loading={loading} filteredData={filteredData} tillDates={tillDates} />
+        </div>
     )
 }
 
