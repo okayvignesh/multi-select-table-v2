@@ -1,10 +1,7 @@
 import React from "react";
 import { bagStatuses } from "../utils/Data";
-import { TbDelta } from "react-icons/tb";
 
-function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
-    const showDiff = false;
-
+function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos, fsi, gbi, differenceToggle }) {
     return (
         <div className="all-ways">
             <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
@@ -87,7 +84,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
                                                 });
 
                                                 return (
-                                                    <div className={`${showDiff ? 'col-6' : 'col-4'}`} key={i.date}>
+                                                    <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date}>
                                                         <table className="table">
                                                             <thead>
                                                                 <tr className="till-day-class">
@@ -100,17 +97,26 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
                                                                 </tr>
                                                                 <tr className='blue'>
                                                                     <th className='right-parent-th fixed-height-header'>
-                                                                        <div className={`right-th fixed-height-header ${showDiff ? 'col-2' : 'col-4'}`}>GBI</div>
                                                                         {
-                                                                            showDiff &&
-                                                                            <div className='right-th fixed-height-header col-3'><TbDelta /> (AOS - GBI)</div>
+                                                                            gbi &&
+                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>
                                                                         }
-                                                                        <div className={`right-th fixed-height-header ${showDiff ? 'col-2' : 'col-4'}`}>AOS</div>
                                                                         {
-                                                                            showDiff &&
-                                                                            <div className='right-th fixed-height-header col-3'><TbDelta /> (AOS - FSI)</div>
+                                                                            differenceToggle && aos && gbi &&
+                                                                            <div className='right-th fixed-height-header col-3'> AOS - GBI</div>
                                                                         }
-                                                                        <div className={`right-th fixed-height-header ${showDiff ? 'col-2' : 'col-4'}`}>FSI</div>
+                                                                        {
+                                                                            aos &&
+                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>
+                                                                        }
+                                                                        {
+                                                                            differenceToggle && aos && fsi &&
+                                                                            <div className='right-th fixed-height-header col-3'> AOS - FSI</div>
+                                                                        }
+                                                                        {
+                                                                            fsi &&
+                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>
+                                                                        }
                                                                     </th>
                                                                 </tr>
                                                             </thead>
@@ -131,12 +137,13 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
 
                                                                                             if (typeof subKeys === 'object' && subKeys !== null) {
                                                                                                 const keys = Object.keys(subKeys);
+                                                                                                let orderedKeys = [];
 
-                                                                                                let orderedKeys = keys.map((key, index) => ({
-                                                                                                    key,
-                                                                                                    className: 'col-4',
-                                                                                                    value: subKeys[key],
-                                                                                                }));
+                                                                                                // let orderedKeys = keys.map((key, index) => ({
+                                                                                                //     key,
+                                                                                                //     className: 'col-4',
+                                                                                                //     value: subKeys[key],
+                                                                                                // }));
 
                                                                                                 const safeSubtract = (a, b) => {
                                                                                                     const numA = Number(a);
@@ -145,14 +152,32 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates }) {
                                                                                                 };
 
 
-                                                                                                if (showDiff) {
-                                                                                                    orderedKeys = [
-                                                                                                        { key: keys[0], className: 'col-2', value: subKeys[keys[0]] },
-                                                                                                        { key: `${keys[0]} - ${keys[1]}`, className: 'col-3', value: safeSubtract(subKeys[keys[1]], subKeys[keys[0]]) },
-                                                                                                        { key: keys[1], className: 'col-2', value: subKeys[keys[1]] },
-                                                                                                        { key: `${keys[1]} - ${keys[2]}`, className: 'col-3', value: safeSubtract(subKeys[keys[1]], subKeys[keys[2]]) },
-                                                                                                        { key: keys[2], className: 'col-2', value: subKeys[keys[2]] },
-                                                                                                    ];
+                                                                                                if (differenceToggle) {
+                                                                                                    if (gbi) {
+                                                                                                        orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
+                                                                                                    }
+                                                                                                    if (gbi && aos) {
+                                                                                                        orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
+                                                                                                    }
+                                                                                                    if (aos) {
+                                                                                                        orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
+                                                                                                    }
+                                                                                                    if (aos && fsi) {
+                                                                                                        orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['fsi']) });
+                                                                                                    }
+                                                                                                    if (fsi) {
+                                                                                                        orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    if (gbi) {
+                                                                                                        orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
+                                                                                                    }
+                                                                                                    if (aos) {
+                                                                                                        orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
+                                                                                                    }
+                                                                                                    if (fsi) {
+                                                                                                        orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
+                                                                                                    }
                                                                                                 }
 
                                                                                                 return (

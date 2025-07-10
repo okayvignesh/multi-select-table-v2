@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useEffect } from 'react';
+import { FaDownload, FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import axios from 'axios';
 
 function Footer() {
@@ -51,6 +52,11 @@ function Footer() {
             });
     }, []);
 
+
+    const handleDownloadPDF = () => {
+        window.print();
+    }
+
     return (
         <footer className="footer">
             {
@@ -72,6 +78,25 @@ function Footer() {
                         <div className='footer-box'>
                             <p>FSI Last Snapshot Time</p>
                             <p className="muted">{data?.FSI_Last_Snapshot_Time} {calculateTimeAgo(data?.FSI_Last_Snapshot_Time)}</p>
+                        </div>
+                        <div className='download-box dropdown'>
+                            <button className="dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <FaDownload />
+                            </button>
+                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown">
+                                {/* <li>
+                                    <a className="dropdown-item" href="#"
+                                        onClick={() => { alert('Excel download clicked'); }}>
+                                        <FaFileExcel size={18} /> <span>Download Excel</span>
+                                    </a>
+                                </li> */}
+                                <li>
+                                    <a className="dropdown-item" href="#"
+                                        onClick={() => handleDownloadPDF()}>
+                                        <FaFilePdf size={18} /> <span>Download PDF</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </>
             }
