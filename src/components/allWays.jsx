@@ -4,6 +4,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
 
     const clearedWTB = summaryWTB && summaryWTB.length ? summaryWTB.map(text => text.replace(/\s*\(.*?\)/g, '')).join(', ') : '';
 
+    console.log(tillDates)
     return (
         <div className="all-ways">
             <p className="title">Ways to Buy &nbsp;
@@ -152,7 +153,6 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                                                             }
                                                                                                         }
 
-                                                                                                        console.log(orderedKeys)
                                                                                                         return orderedKeys.map((item, index) => (
                                                                                                             <div key={index} className={`right-th right-th-body ${item.className}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
                                                                                                                 {item.value}

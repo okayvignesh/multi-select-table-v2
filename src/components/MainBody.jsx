@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react'
 import Summary from './Summary'
 import Detailed from './Detailed'
 
-function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData, tillDates, summaryWTB }) {
-    const [differenceToggle, setDifferenceToggle] = useState(false)
-    const [aos, setAos] = useState(true)
-    const [fsi, setFsi] = useState(true)
-    const [gbi, setGbi] = useState(true)
-
+function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData, tillDates, summaryWTB, differenceToggle, setDifferenceToggle, countries, waysToBuy, aos, fsi, gbi, setAos, setFsi, setGbi }) {
     useEffect(() => {
         const checkedCount = [aos, fsi, gbi].filter(Boolean).length
         if (checkedCount < 2 && differenceToggle) {

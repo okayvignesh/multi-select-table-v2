@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useEffect } from 'react';
 import { FaDownload, FaFileExcel, FaFilePdf } from 'react-icons/fa';
+import { exportToExcel, exportToSummaryExcel } from '../utils/Functions';
 import axios from 'axios';
 
-function Footer() {
+function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false)
 
@@ -57,6 +58,21 @@ function Footer() {
         window.print();
     }
 
+    const handleExcelExport = () => {
+        if (activeTab === 'summary') {
+            exportToSummaryExcel({ filteredData, totalData, showDiff: differenceToggle, summaryWTB, aos, fsi, gbi, tillDates });
+        } else {
+            exportToExcel({
+                filteredData,
+                showDiff: differenceToggle,
+                aos,
+                fsi,
+                gbi,
+                tillDates
+            })
+        }
+    }
+
     return (
         <footer className="footer">
             {
@@ -84,12 +100,12 @@ function Footer() {
                                 <FaDownload />
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown">
-                                {/* <li>
+                                <li>
                                     <a className="dropdown-item" href="#"
-                                        onClick={() => { alert('Excel download clicked'); }}>
+                                        onClick={() => handleExcelExport()}>
                                         <FaFileExcel size={18} /> <span>Download Excel</span>
                                     </a>
-                                </li> */}
+                                </li>
                                 <li>
                                     <a className="dropdown-item" href="#"
                                         onClick={() => handleDownloadPDF()}>

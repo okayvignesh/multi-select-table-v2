@@ -18,6 +18,10 @@ function App() {
   const [summaryWTB, setSummaryWTB] = useState([]);
   const [tillDates, setTillDates] = useState([]);
   const [tillDateOptions, setTillDateOptions] = useState([]);
+  const [differenceToggle, setDifferenceToggle] = useState(false);
+  const [aos, setAos] = useState(true)
+  const [fsi, setFsi] = useState(true)
+  const [gbi, setGbi] = useState(true)
   const [appliedFilters, setAppliedFilters] = useState({
     filter1: [],
     filter2: null,
@@ -37,7 +41,7 @@ function App() {
   useEffect(() => {
     fetchRowData();
   }, [])
-  
+
 
   return (
     <div>
@@ -47,10 +51,10 @@ function App() {
         waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
         fetchRowData={fetchRowData}
       />
-      <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} />
-      <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB}
-        appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} />
-      <Footer />
+      <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} /> 
+      <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi}
+        appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} />
+      <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} />
     </div>
   );
 }
