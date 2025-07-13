@@ -1,10 +1,52 @@
-import { bagStatuses } from "../utils/Data";
+import { useState } from 'react';
+import { IoIosArrowDown, IoIosArrowForward } from 'react-icons/io';
 
-function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summaryWTB, aos, fsi, gbi, differenceToggle }) {
+function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summaryWTB, aos, fsi, gbi, differenceToggle, dynamicHeaderMap }) {
 
     const clearedWTB = summaryWTB && summaryWTB.length ? summaryWTB.map(text => text.replace(/\s*\(.*?\)/g, '')).join(', ') : '';
 
-    console.log(tillDates)
+    const toTitleCase = (camelCase) => {
+        return camelCase
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+    };
+
+    const [expandedHeaders, setExpandedHeaders] = useState({});
+
+    const orderedBagStatusKeys = [];
+    const seen = new Set();
+    const childToParentMap = {};
+
+    Object.keys(dynamicHeaderMap).forEach(parent => {
+        if (!seen.has(parent)) {
+            orderedBagStatusKeys.push({ key: parent, isParent: true });
+            seen.add(parent);
+        }
+        dynamicHeaderMap[parent].forEach(child => {
+            childToParentMap[child] = parent;
+            if (!seen.has(child)) {
+                orderedBagStatusKeys.push({ key: child, isParent: false });
+                seen.add(child);
+            }
+        });
+    });
+
+    const datesToCheck = Object.keys(totalData.all || totalData.selective || {});
+    for (let sampleDateKey of datesToCheck) {
+        const obj = (allFlag ? totalData.all[sampleDateKey] : totalData.selective[sampleDateKey]) || {};
+        Object.keys(obj).forEach(key => {
+            if (!seen.has(key)) {
+                orderedBagStatusKeys.push({ key, isParent: false });
+                seen.add(key);
+            }
+        });
+        break;
+    }
+
+    const parentKeys = new Set(
+        orderedBagStatusKeys.filter(x => x.isParent).map(x => x.key)
+    );
+
     return (
         <div className="all-ways">
             <p className="title">Ways to Buy &nbsp;
@@ -36,11 +78,34 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                         <tr>
                                                             <td style={{ width: "30%", borderTop: 'none' }} className='td-parent' >
                                                                 {
-                                                                    bagStatuses.map((item) => (
-                                                                        <div key={item.name} className={`td-div corner-left-right ${item.className}`}>
-                                                                            {item.name}
-                                                                        </div>
-                                                                    ))
+                                                                    orderedBagStatusKeys.map(({ key, isParent }) => {
+                                                                        const parentKey = childToParentMap[key];
+                                                                        if (!isParent && parentKey && !expandedHeaders[parentKey]) {
+                                                                            return null; // hide child if parent collapsed
+                                                                        }
+                                                                        return (
+                                                                            <div
+                                                                                key={key}
+                                                                                className={`td-div corner-left-right`}
+                                                                                style={{ backgroundColor: isParent ? '#e8e8ed' : 'transparent', paddingLeft: isParent ? '10px' : '26px', cursor: isParent ? 'pointer' : 'default' }}
+                                                                                onClick={() => {
+                                                                                    if (isParent) {
+                                                                                        setExpandedHeaders(prev => ({
+                                                                                            ...prev,
+                                                                                            [key]: !prev[key]
+                                                                                        }));
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                {isParent && (
+                                                                                    expandedHeaders[key] ?
+                                                                                        <IoIosArrowDown className="cursor-pointer" /> :
+                                                                                        <IoIosArrowForward className="cursor-pointer" />
+                                                                                )}
+                                                                                {toTitleCase(key)}
+                                                                            </div>
+                                                                        );
+                                                                    })
                                                                 }
                                                             </td>
                                                         </tr>
@@ -50,6 +115,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                         </tbody>
                                     </table>
                                 </div>
+
                                 <div className="col-10 right-table" >
                                     {
                                         filteredData && filteredData
@@ -72,32 +138,16 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                     <th style={{ width: "30%" }}>
                                                                         <div className="d-flex px-2">
                                                                             <p>{tillDateObj?.label || ''}</p>
-                                                                            {/* <span>{formatDate(new Date(dateOptions[dateOptions.length - 1]['value']))} - {i.date}</span> */}
                                                                         </div>
                                                                     </th>
                                                                 </tr>
                                                                 <tr className='blue'>
                                                                     <th className='right-parent-th fixed-height-header'>
-                                                                        {
-                                                                            gbi &&
-                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>
-                                                                        }
-                                                                        {
-                                                                            differenceToggle && aos && gbi &&
-                                                                            <div className='right-th fixed-height-header col-3'> AOS - GBI</div>
-                                                                        }
-                                                                        {
-                                                                            aos &&
-                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>
-                                                                        }
-                                                                        {
-                                                                            differenceToggle && aos && fsi &&
-                                                                            <div className='right-th fixed-height-header col-3'> AOS - FSI</div>
-                                                                        }
-                                                                        {
-                                                                            fsi &&
-                                                                            <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>
-                                                                        }
+                                                                        {gbi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>}
+                                                                        {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3'> AOS - GBI</div>}
+                                                                        {aos && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>}
+                                                                        {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3'> AOS - FSI</div>}
+                                                                        {fsi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>}
                                                                     </th>
                                                                 </tr>
                                                             </thead>
@@ -108,61 +158,41 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                             <div className='gap-div'></div>
                                                                             <tr>
                                                                                 {
-                                                                                    (allFlag ? totalData.all[i.date] : totalData.selective[i.date]) && Object.keys((allFlag ? totalData.all[i.date] : totalData.selective[i.date])).map((item, key) => {
-                                                                                        const subKeys = (allFlag ? totalData.all[i.date] : totalData.selective[i.date])[item];
-
-                                                                                        return (
-                                                                                            <td key={key} className='right-parent-th'>
-                                                                                                {
-                                                                                                    subKeys && (() => {
-                                                                                                        const keys = Object.keys(subKeys);
-
-                                                                                                        const safeSubtract = (a, b) => {
-                                                                                                            const numA = Number(a);
-                                                                                                            const numB = Number(b);
-                                                                                                            return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
-                                                                                                        };
-
-
-                                                                                                        let orderedKeys = [];
-                                                                                                        if (differenceToggle) {
-                                                                                                            if (gbi) {
-                                                                                                                orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
-                                                                                                            }
-                                                                                                            if (gbi && aos) {
-                                                                                                                orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
-                                                                                                            }
-                                                                                                            if (aos) {
-                                                                                                                orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
-                                                                                                            }
-                                                                                                            if (aos && fsi) {
-                                                                                                                orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['fsi']) });
-                                                                                                            }
-                                                                                                            if (fsi) {
-                                                                                                                orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
-                                                                                                            }
-                                                                                                        } else {
-                                                                                                            if (gbi) {
-                                                                                                                orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
-                                                                                                            }
-                                                                                                            if (aos) {
-                                                                                                                orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
-                                                                                                            }
-                                                                                                            if (fsi) {
-                                                                                                                orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
-                                                                                                            }
-                                                                                                        }
-
-                                                                                                        return orderedKeys.map((item, index) => (
-                                                                                                            <div key={index} className={`right-th right-th-body ${item.className}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                                                                                                                {item.value}
-                                                                                                            </div>
-                                                                                                        ));
-                                                                                                    })()
-                                                                                                }
-                                                                                            </td>
-                                                                                        )
-                                                                                    })
+                                                                                    (allFlag ? totalData.all[i.date] : totalData.selective[i.date]) &&
+                                                                                    Object.keys((allFlag ? totalData.all[i.date] : totalData.selective[i.date]))
+                                                                                        .filter(key => {
+                                                                                            const parentKey = childToParentMap[key];
+                                                                                            return !(parentKey && !expandedHeaders[parentKey]);
+                                                                                        })
+                                                                                        .map((item, keyIndex) => {
+                                                                                            const subKeys = (allFlag ? totalData.all[i.date] : totalData.selective[i.date])[item];
+                                                                                            const safeSubtract = (a, b) => {
+                                                                                                const numA = Number(a);
+                                                                                                const numB = Number(b);
+                                                                                                return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
+                                                                                            };
+                                                                                            let orderedKeys = [];
+                                                                                            if (differenceToggle) {
+                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
+                                                                                                if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
+                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
+                                                                                                if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['fsi']) });
+                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
+                                                                                            } else {
+                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
+                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
+                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
+                                                                                            }
+                                                                                            return (
+                                                                                                <td key={keyIndex} className={`right-parent-th ${parentKeys.has(item) ? 'parent' : ''}`}>
+                                                                                                    {orderedKeys.map((item, index) => (
+                                                                                                        <div key={index} className={`right-th right-th-body ${item.className}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                                                                                            {item.value}
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </td>
+                                                                                            );
+                                                                                        })
                                                                                 }
                                                                             </tr>
                                                                         </>

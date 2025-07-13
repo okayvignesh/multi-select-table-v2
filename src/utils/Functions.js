@@ -56,70 +56,104 @@ export function getTillDates(dateOptions) {
 }
 
 
-export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB }) => {
+export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap }) => {
     const waysToBuy = new Set();
     const comboOrder = [];
     const seenCombos = new Set();
-    const comboStatusMap = {};
-    const bagStatusMap = {
-        "Bags Approved": "bagsApproved",
-        "Bags Declined": "bagsDeclined",
-        "Bags Deleted": "bagsDeleted",
-        "Bags Ordered": "bagsOrdered",
-        "Bags Pending": "bagsPending",
-        "Mass Deleted": "massDeleted",
-        "": "openBags",
-        "Payments Failed": "paymentsFailed",
-        "Total Bags Created": "totalBagsCreated",
-        "Total Bags Deleted": "totalBagsDeleted",
-        "Total Bags Ordered": "totalBagsOrdered",
+
+    const toCamelCase = (str) => {
+        return str
+            .split(' ')
+            .map((word, index) => {
+                const lower = word.toLowerCase();
+                if (index === 0) return lower;
+                return lower.charAt(0).toUpperCase() + lower.slice(1);
+            })
+            .join('');
     };
 
-    const dateGroups = {};
+    const bagStatusMap = {};
+    const headerStatusesSet = new Set();
+    const childStatusesSet = new Set();
 
     data.forEach(item => {
-        waysToBuy.add(JSON.stringify({ id: item.Ways_To_Buy, label: item.Ways_To_Buy }));
+        if (item.Bag_Header_Status) {
+            const key = toCamelCase(item.Bag_Header_Status);
+            bagStatusMap[item.Bag_Header_Status] = key;
+            headerStatusesSet.add(item.Bag_Header_Status);
+        }
+        if (item.Bag_Status) {
+            const key = toCamelCase(item.Bag_Status);
+            bagStatusMap[item.Bag_Status] = key;
+            childStatusesSet.add(item.Bag_Status);
+        }
+    });
 
+    const dynamicBagStatuses = Array.from(new Set([
+        ...headerStatusesSet,
+        ...childStatusesSet
+    ])).map(status => ({
+        key: toCamelCase(status),
+        name: status,
+        className: ""
+    }));
+
+    const dynamicHeaderToChildren = {};
+    const dateGroups = {};
+    const comboHeaderMap = {};
+    const comboStatusMap = {};
+
+    data.forEach(item => {
         const [_, endDate] = item.Day_Range.split(" - ");
         const formattedDate = endDate.trim();
         const countryKey = item.Country;
         const waysKey = item.Ways_To_Buy;
         const groupKey = `${countryKey}__${waysKey}`;
+        const headerKey = bagStatusMap[item.Bag_Header_Status];
         const statusKey = bagStatusMap[item.Bag_Status];
+
+        if (!headerKey || !statusKey) return;
 
         if (!seenCombos.has(groupKey)) {
             seenCombos.add(groupKey);
             comboOrder.push(groupKey);
         }
 
-        if (!comboStatusMap[groupKey]) comboStatusMap[groupKey] = new Set();
-        if (statusKey) comboStatusMap[groupKey].add(statusKey);
+        if (!dynamicHeaderToChildren[headerKey]) dynamicHeaderToChildren[headerKey] = new Set();
+        dynamicHeaderToChildren[headerKey].add(statusKey);
 
-        if (!dateGroups[formattedDate]) {
-            dateGroups[formattedDate] = {};
-        }
+        if (!comboHeaderMap[groupKey]) comboHeaderMap[groupKey] = new Set();
+        comboHeaderMap[groupKey].add(headerKey);
 
+        const comboHeaderKey = `${groupKey}__${headerKey}`;
+        if (!comboStatusMap[comboHeaderKey]) comboStatusMap[comboHeaderKey] = new Set();
+        comboStatusMap[comboHeaderKey].add(statusKey);
+
+        if (!dateGroups[formattedDate]) dateGroups[formattedDate] = {};
         if (!dateGroups[formattedDate][groupKey]) {
             dateGroups[formattedDate][groupKey] = {
                 id: uuidv4(),
                 country: countryKey,
                 ways_to_buy: waysKey,
                 fsi_status: item.FSI_Flag,
+                _raw: {}
             };
         }
 
-        if (statusKey) {
-            let fsiValue = item.FSI_Cnt;
-            if (item?.FSI_Flag === "N" && item?.FSI_Cnt === '') {
-                fsiValue = 'Null';
-            }
-
-            dateGroups[formattedDate][groupKey][statusKey] = {
-                gbi: item.GBI_Cnt,
-                aos: item.AOS_Cnt,
-                fsi: fsiValue,
-            };
+        if (!dateGroups[formattedDate][groupKey]._raw[headerKey]) {
+            dateGroups[formattedDate][groupKey]._raw[headerKey] = {};
         }
+
+        let fsiValue = item.FSI_Cnt;
+        if (item?.FSI_Flag === "N" && item?.FSI_Cnt === '') {
+            fsiValue = 'Null';
+        }
+
+        dateGroups[formattedDate][groupKey]._raw[headerKey][statusKey] = {
+            gbi: item.GBI_Cnt,
+            aos: item.AOS_Cnt,
+            fsi: fsiValue,
+        };
     });
 
     Object.keys(dateGroups).forEach(date => {
@@ -127,36 +161,64 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
 
         comboOrder.forEach(combo => {
             const [country, ways_to_buy] = combo.split("__");
-
             if (!groupData[combo]) {
                 groupData[combo] = {
                     id: uuidv4(),
                     country,
                     ways_to_buy,
+                    _raw: {}
                 };
             }
 
-            const requiredStatuses = comboStatusMap[combo];
-            requiredStatuses.forEach(status => {
-                if (!groupData[combo][status]) {
-                    groupData[combo][status] = {
-                        gbi: '-',
-                        aos: '-',
-                        fsi: '-',
-                    };
+            const item = groupData[combo];
+            const _raw = item._raw;
+
+            const flattened = {
+                id: item.id,
+                country: item.country,
+                ways_to_buy: item.ways_to_buy,
+                fsi_status: item.fsi_status
+            };
+
+            dynamicBagStatuses.forEach(({ key }) => {
+                if (dynamicHeaderToChildren[key]) {
+                    let totalGBI = 0, totalAOS = 0, totalFSI = 0;
+
+                    dynamicHeaderToChildren[key].forEach(childKey => {
+                        const data = (_raw[key] && _raw[key][childKey]) || { gbi: 0, aos: 0, fsi: 0 };
+                        totalGBI += parseInt(data.gbi || 0);
+                        totalAOS += parseInt(data.aos || 0);
+                        totalFSI += parseInt(data.fsi || 0);
+                    });
+
+                    flattened[key] = { gbi: totalGBI, aos: totalAOS, fsi: totalFSI };
+
+                    dynamicHeaderToChildren[key].forEach(childKey => {
+                        const data = (_raw[key] && _raw[key][childKey]) || { gbi: 0, aos: 0, fsi: 0 };
+                        flattened[childKey] = data;
+                    });
+                } else {
+                    let found = null;
+                    Object.keys(_raw).forEach(h => {
+                        if (_raw[h][key]) found = _raw[h][key];
+                    });
+                    flattened[key] = found || { gbi: 0, aos: 0, fsi: 0 };
                 }
             });
+
+            groupData[combo] = flattened;
         });
     });
 
     const finalResult = Object.entries(dateGroups).map(([date, groupData]) => ({
         date,
-        data: comboOrder.map(combo => groupData[combo]),
+        data: comboOrder.map(combo => groupData[combo])
     }));
 
     setFilteredData(finalResult);
-    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions })
-    calculateTotals({ data: finalResult, setTotalData, setSummaryWTB });
+    setDynamicHeaderMap(dynamicHeaderToChildren);
+    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions });
+    calculateTotals({ data: finalResult, setTotalData, setSummaryWTB, dynamicHeaderMap: dynamicHeaderToChildren });
 };
 
 
@@ -172,7 +234,12 @@ const pushTillDateOptions = ({ dates, setTillDateOptions }) => {
 };
 
 
-export const calculateTotals = ({ data, setTotalData, setSummaryWTB, aos, fsi, gbi }) => {
+export const calculateTotals = ({
+    data,
+    setTotalData,
+    setSummaryWTB,
+    dynamicHeaderMap
+}) => {
     const newTotalData = {
         all: {},
         selective: {}
@@ -181,45 +248,61 @@ export const calculateTotals = ({ data, setTotalData, setSummaryWTB, aos, fsi, g
 
     const safeNumber = (v) => (typeof v === 'number' ? v : 0);
 
+    const orderedKeys = [];
+    const added = new Set();
+
+    Object.keys(dynamicHeaderMap).forEach(parent => {
+        if (!added.has(parent)) {
+            orderedKeys.push(parent);
+            added.add(parent);
+        }
+        dynamicHeaderMap[parent].forEach(child => {
+            if (!added.has(child)) {
+                orderedKeys.push(child);
+                added.add(child);
+            }
+        });
+    });
+
+    data[0]?.data?.forEach(item => {
+        Object.keys(item).forEach(key => {
+            if (!['id', 'country', 'ways_to_buy', '_raw', 'fsi_status'].includes(key) && !added.has(key)) {
+                orderedKeys.push(key);
+                added.add(key);
+            }
+        });
+    });
+
     data.forEach(item => {
         const allTotals = {};
         const selectiveTotals = {};
 
-        const initTotals = () => ({
-            "bagsApproved": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "bagsPending": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "bagsDeclined": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "totalBagsCreated": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "bagsDeleted": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "massDeleted": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "totalBagsDeleted": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "bagsOrdered": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "paymentsFailed": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "totalBagsOrdered": { "gbi": 0, "aos": 0, "fsi": 0 },
-            "openBags": { "gbi": 0, "aos": 0, "fsi": 0 },
+        orderedKeys.forEach(key => {
+            allTotals[key] = { gbi: 0, aos: 0, fsi: 0 };
+            selectiveTotals[key] = { gbi: 0, aos: 0, fsi: 0 };
         });
 
         let hasYorN = false;
         let hasY = false;
 
-        Object.assign(allTotals, initTotals());
-        Object.assign(selectiveTotals, initTotals());
-
         item.data.forEach(e => {
             const fsiStatus = e?.fsi_status;
 
-            Object.keys(allTotals).forEach(key => {
+            orderedKeys.forEach(key => {
                 const current = e?.[key];
                 if (current) {
-                    Object.keys(allTotals[key]).forEach(subKey => {
-                        allTotals[key][subKey] += safeNumber(current[subKey]);
-                        if (fsiStatus === 'Y') {
-                            if (!waysToBuy.includes(e.ways_to_buy)) {
-                                waysToBuy.push(e.ways_to_buy);
-                            }
-                            selectiveTotals[key][subKey] += safeNumber(current[subKey]);
+                    allTotals[key].gbi += safeNumber(current.gbi);
+                    allTotals[key].aos += safeNumber(current.aos);
+                    allTotals[key].fsi += safeNumber(current.fsi);
+
+                    if (fsiStatus === 'Y') {
+                        if (!waysToBuy.includes(e.ways_to_buy)) {
+                            waysToBuy.push(e.ways_to_buy);
                         }
-                    });
+                        selectiveTotals[key].gbi += safeNumber(current.gbi);
+                        selectiveTotals[key].aos += safeNumber(current.aos);
+                        selectiveTotals[key].fsi += safeNumber(current.fsi);
+                    }
                 }
             });
 
@@ -240,10 +323,25 @@ export const calculateTotals = ({ data, setTotalData, setSummaryWTB, aos, fsi, g
 };
 
 
-export const exportToExcel = async ({ filteredData, showDiff, aos, fsi, gbi, tillDates }) => {
+export const exportToExcel = async ({
+    filteredData,
+    showDiff,
+    aos,
+    fsi,
+    gbi,
+    tillDates,
+    dynamicHeaderMap
+}) => {
     const gbiEnabled = gbi;
     const aosEnabled = aos;
     const fsiEnabled = fsi;
+
+
+    const toTitleCase = (camelCase) => {
+        return camelCase
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+    };
 
     const filteredExportData = filteredData
         .filter(i => tillDates.some(obj => {
@@ -288,6 +386,7 @@ export const exportToExcel = async ({ filteredData, showDiff, aos, fsi, gbi, til
     worksheet.addRow(headerRow1);
     worksheet.addRow(headerRow3);
 
+    // Merge header cells
     let colIndexForMerge = 4;
     dates.forEach(() => {
         const span =
@@ -329,7 +428,8 @@ export const exportToExcel = async ({ filteredData, showDiff, aos, fsi, gbi, til
             bags[date] = bags[date] || {};
             bags[date]['fsi_status'] = entry.fsi_status;
 
-            bagStatuses.forEach(({ key: statusKey }) => {
+            Object.keys(entry).forEach(statusKey => {
+                if (['id', 'country', 'ways_to_buy', '_raw', 'fsi_status'].includes(statusKey)) return;
                 bags[date][statusKey] = entry[statusKey] || { aos: "-", fsi: "-", gbi: "-" };
             });
         });
@@ -338,46 +438,91 @@ export const exportToExcel = async ({ filteredData, showDiff, aos, fsi, gbi, til
     rowMap.forEach((dateData, key) => {
         const [country, way] = key.split("||");
 
-        bagStatuses.forEach(({ key: statusKey, name }) => {
-            let hasData = false;
+        Object.keys(dynamicHeaderMap).forEach(parentKey => {
+            const children = Array.from(dynamicHeaderMap[parentKey] || []);
+
+            let parentHasData = false;
             for (const date of dates) {
-                const s = dateData[date]?.[statusKey];
+                const s = dateData[date]?.[parentKey];
                 if (s && (s.gbi !== "-" || s.aos !== "-" || s.fsi !== "-")) {
-                    hasData = true;
+                    parentHasData = true;
                     break;
                 }
             }
-            if (!hasData) return;
+            if (parentHasData) {
+                const row = [country, way, toTitleCase(parentKey)];
+                dates.forEach(date => {
+                    const statusData = dateData[date]?.[parentKey];
+                    const fsiFlag = dateData[date]?.fsi_status;
+                    const gbi = parseOrDash(statusData?.gbi);
+                    const aos = parseOrDash(statusData?.aos);
+                    let fsi = statusData?.fsi;
+                    if (fsiFlag === "N") fsi = "Null"; else fsi = parseOrDash(fsi);
 
-            const row = [country, way, name];
-            dates.forEach(date => {
-                const statusData = dateData[date]?.[statusKey];
-                const fsiFlag = dateData[date]?.fsi_status;
-                const gbi = parseOrDash(statusData?.gbi);
-                const aos = parseOrDash(statusData?.aos);
-                let fsi = statusData?.fsi;
-                if (fsiFlag === "N") {
-                    fsi = "Null";
-                } else {
-                    fsi = parseOrDash(fsi);
-                }
+                    if (gbiEnabled) row.push(safeValue(gbi));
+                    if (showDiff && aosEnabled && gbiEnabled) {
+                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? aos - gbi : "-";
+                        row.push(safeValue(diffAosGbi));
+                    }
+                    if (aosEnabled) row.push(safeValue(aos));
+                    if (showDiff && aosEnabled && fsiEnabled) {
+                        const diffAosFsi = (typeof aos === "number" && typeof fsi === "number") ? aos - fsi : "-";
+                        row.push(safeValue(diffAosFsi));
+                    }
+                    if (fsiEnabled) row.push(safeValue(fsi));
+                });
 
-                if (gbiEnabled) row.push(safeValue(gbi));
-                if (showDiff && aosEnabled && gbiEnabled) {
-                    const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? aos - gbi : "-";
-                    row.push(safeValue(diffAosGbi));
-                }
-                if (aosEnabled) row.push(safeValue(aos));
-                if (showDiff && aosEnabled && fsiEnabled) {
-                    const diffAosFsi = (typeof aos === "number" && typeof fsi === "number") ? aos - fsi : "-";
-                    row.push(safeValue(diffAosFsi));
-                }
-                if (fsiEnabled) row.push(safeValue(fsi));
-            });
+                const newRow = worksheet.addRow(row);
+                newRow.eachCell((cell, colNumber) => {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    if (colNumber > 2) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFE8E8ED' }
+                        };
+                    }
+                });
 
-            const newRow = worksheet.addRow(row);
-            newRow.eachCell(cell => {
-                cell.alignment = { horizontal: "center", vertical: "middle" };
+            }
+
+            children.forEach(childKey => {
+                let hasData = false;
+                for (const date of dates) {
+                    const s = dateData[date]?.[childKey];
+                    if (s && (s.gbi !== "-" || s.aos !== "-" || s.fsi !== "-")) {
+                        hasData = true;
+                        break;
+                    }
+                }
+                if (!hasData) return;
+
+                const row = [country, way, toTitleCase(childKey)];
+                dates.forEach(date => {
+                    const statusData = dateData[date]?.[childKey];
+                    const fsiFlag = dateData[date]?.fsi_status;
+                    const gbi = parseOrDash(statusData?.gbi);
+                    const aos = parseOrDash(statusData?.aos);
+                    let fsi = statusData?.fsi;
+                    if (fsiFlag === "N") fsi = "Null"; else fsi = parseOrDash(fsi);
+
+                    if (gbiEnabled) row.push(safeValue(gbi));
+                    if (showDiff && aosEnabled && gbiEnabled) {
+                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? aos - gbi : "-";
+                        row.push(safeValue(diffAosGbi));
+                    }
+                    if (aosEnabled) row.push(safeValue(aos));
+                    if (showDiff && aosEnabled && fsiEnabled) {
+                        const diffAosFsi = (typeof aos === "number" && typeof fsi === "number") ? aos - fsi : "-";
+                        row.push(safeValue(diffAosFsi));
+                    }
+                    if (fsiEnabled) row.push(safeValue(fsi));
+                });
+
+                const newRow = worksheet.addRow(row);
+                newRow.eachCell(cell => {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                });
             });
         });
     });

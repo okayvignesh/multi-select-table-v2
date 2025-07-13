@@ -22,6 +22,7 @@ function App() {
   const [aos, setAos] = useState(true)
   const [fsi, setFsi] = useState(true)
   const [gbi, setGbi] = useState(true)
+  const [dynamicHeaderMap, setDynamicHeaderMap] = useState({});
   const [appliedFilters, setAppliedFilters] = useState({
     filter1: [],
     filter2: null,
@@ -33,7 +34,7 @@ function App() {
     setLoading(true)
     // GET REQUEST FOR CHECKING 
     axios.get('https://ryr9j.wiremockapi.cloud/rowdata')
-      .then(response => transformBagData({ data: response.data.result, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB }))
+      .then(response => transformBagData({ data: response.data.result, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap }))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -51,10 +52,10 @@ function App() {
         waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
         fetchRowData={fetchRowData}
       />
-      <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} /> 
+      <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} />
       <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi}
-        appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} />
-      <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} />
+        appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} dynamicHeaderMap={dynamicHeaderMap} />
+      <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap} />
     </div>
   );
 }

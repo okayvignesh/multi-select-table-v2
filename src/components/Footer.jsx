@@ -4,7 +4,7 @@ import { FaDownload, FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { exportToExcel, exportToSummaryExcel } from '../utils/Functions';
 import axios from 'axios';
 
-function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates }) {
+function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates, dynamicHeaderMap }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false)
 
@@ -68,7 +68,8 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                 aos,
                 fsi,
                 gbi,
-                tillDates
+                tillDates,
+                dynamicHeaderMap
             })
         }
     }
