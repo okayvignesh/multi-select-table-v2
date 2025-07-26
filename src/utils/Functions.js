@@ -110,9 +110,10 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
         const waysKey = item.Ways_To_Buy;
         const groupKey = `${countryKey}__${waysKey}`;
         const headerKey = bagStatusMap[item.Bag_Header_Status];
-        const statusKey = bagStatusMap[item.Bag_Status];
+        let statusKey = bagStatusMap[item.Bag_Status];
 
-        if (!headerKey || !statusKey) return;
+        if (!headerKey) return;
+        if (!statusKey && headerKey == 'openBags') statusKey = "openBags";
 
         if (!seenCombos.has(groupKey)) {
             seenCombos.add(groupKey);
@@ -181,30 +182,41 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
             };
 
             dynamicBagStatuses.forEach(({ key }) => {
-                if (dynamicHeaderToChildren[key]) {
-                    let totalGBI = 0, totalAOS = 0, totalFSI = 0;
+                let directData = (_raw[key] && _raw[key][key]) || null;
 
+                if (directData) {
+                    flattened[key] = {
+                        gbi: parseInt(directData.gbi || 0),
+                        aos: parseInt(directData.aos || 0),
+                        fsi: parseInt(directData.fsi || 0)
+                    };
+                } else if (dynamicHeaderToChildren[key]) {
                     dynamicHeaderToChildren[key].forEach(childKey => {
+                        if (childKey === key) return;
                         const data = (_raw[key] && _raw[key][childKey]) || { gbi: 0, aos: 0, fsi: 0 };
-                        totalGBI += parseInt(data.gbi || 0);
-                        totalAOS += parseInt(data.aos || 0);
-                        totalFSI += parseInt(data.fsi || 0);
+                        flattened[childKey] = {
+                            gbi: parseInt(data.gbi || 0),
+                            aos: parseInt(data.aos || 0),
+                            fsi: parseInt(data.fsi || 0)
+                        };
                     });
 
-                    flattened[key] = { gbi: totalGBI, aos: totalAOS, fsi: totalFSI };
-
-                    dynamicHeaderToChildren[key].forEach(childKey => {
-                        const data = (_raw[key] && _raw[key][childKey]) || { gbi: 0, aos: 0, fsi: 0 };
-                        flattened[childKey] = data;
-                    });
+                    flattened[key] = { gbi: 0, aos: 0, fsi: 0 };
                 } else {
                     let found = null;
                     Object.keys(_raw).forEach(h => {
                         if (_raw[h][key]) found = _raw[h][key];
                     });
-                    flattened[key] = found || { gbi: 0, aos: 0, fsi: 0 };
+                    flattened[key] = found
+                        ? {
+                            gbi: parseInt(found.gbi || 0),
+                            aos: parseInt(found.aos || 0),
+                            fsi: parseInt(found.fsi || 0)
+                        }
+                        : { gbi: 0, aos: 0, fsi: 0 };
                 }
             });
+
 
             groupData[combo] = flattened;
         });
@@ -438,8 +450,16 @@ export const exportToExcel = async ({
     rowMap.forEach((dateData, key) => {
         const [country, way] = key.split("||");
 
-        Object.keys(dynamicHeaderMap).forEach(parentKey => {
-            const children = Array.from(dynamicHeaderMap[parentKey] || []);
+        const cleanedHeaderMap = {};
+
+        Object.entries(dynamicHeaderMap).forEach(([key, set]) => {
+            const newSet = new Set([...set].filter(item => item !== key));
+            cleanedHeaderMap[key] = newSet;
+            if (key == 'openBags') cleanedHeaderMap[key] = new Set(['openBags']);
+        });
+
+        Object.keys(cleanedHeaderMap).forEach(parentKey => {
+            const children = Array.from(cleanedHeaderMap[parentKey] || []);
 
             let parentHasData = false;
             for (const date of dates) {
@@ -487,6 +507,7 @@ export const exportToExcel = async ({
             }
 
             children.forEach(childKey => {
+                if (childKey === 'openBags') return;
                 let hasData = false;
                 for (const date of dates) {
                     const s = dateData[date]?.[childKey];

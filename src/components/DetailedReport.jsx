@@ -13,6 +13,16 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
 
     const [expandedHeaders, setExpandedHeaders] = useState({});
 
+    const cleanedHeaderMap = {};
+
+    Object.entries(dynamicHeaderMap).forEach(([key, set]) => {
+        const newSet = new Set([...set].filter(item => item !== key));
+        cleanedHeaderMap[key] = newSet;
+        if (key == 'openBags') cleanedHeaderMap[key] = new Set(['openBags']);
+    });
+
+    console.log(cleanedHeaderMap)
+
     return (
         <div className="all-ways">
             <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
@@ -64,9 +74,9 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                 <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }} className='td-parent'>
                                                                     {
                                                                         Object.keys(i)
-                                                                            .filter(key => !['id', 'country', 'ways_to_buy', '_raw', 'fsi_status'].includes(key))
+                                                                            .filter(key => !['id', 'country', 'ways_to_buy', '_raw', 'fsi_status', 'openBags'].includes(key))
                                                                             .map((key) => {
-                                                                                const isParent = dynamicHeaderMap[key];
+                                                                                const isParent = cleanedHeaderMap[key];
                                                                                 const toggleKey = `${i.country}|${i.ways_to_buy}|${key}`;
 
                                                                                 if (isParent) {
@@ -88,7 +98,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                                             </div>
                                                                                             {
                                                                                                 expandedHeaders[toggleKey] &&
-                                                                                                [...dynamicHeaderMap[key]].map(childKey => (
+                                                                                                [...cleanedHeaderMap[key]].map(childKey => (
                                                                                                     <div key={childKey} className="td-div child">
                                                                                                         {toTitleCase(childKey)}
                                                                                                     </div>
@@ -96,7 +106,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                                             }
                                                                                         </div>
                                                                                     );
-                                                                                } else if (!Object.values(dynamicHeaderMap).some(children => children.has(key))) {
+                                                                                } else if (!Object.values(cleanedHeaderMap).some(children => children.has(key))) {
                                                                                     return (
                                                                                         <div key={key} className="td-div">
                                                                                             {toTitleCase(key)}
@@ -108,6 +118,17 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                     }
                                                                 </td>
                                                             </tr>
+                                                            {
+                                                                i.openBags && (
+                                                                    <tr key={`openBags-${index}`}>
+                                                                        <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}></td>
+                                                                        <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}></td>
+                                                                        <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}>
+                                                                            <div className="td-div open-bags">{toTitleCase("openBags")}</div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )
+                                                            }
                                                         </React.Fragment>
                                                     )
                                                 })
@@ -173,44 +194,42 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                             <div className='gap-div'></div>
                                                                             <tr style={{ borderTop: 'none', borderBottom: '1px solid #ccc' }}>
                                                                                 {
-                                                                                    Object.keys(e).map(key => {
-                                                                                        if (['id', 'country', 'ways_to_buy'].includes(key)) return null;
+                                                                                    Object.keys(cleanedHeaderMap).map((parentKey) => {
+                                                                                        const toggleKey = `${e.country}|${e.ways_to_buy}|${parentKey}`;
+                                                                                        const parentData = e[parentKey];
+                                                                                        const isParent = true;
 
-                                                                                        const subKeys = e[key];
-                                                                                        const parent = Object.keys(dynamicHeaderMap).find(parentKey =>
-                                                                                            dynamicHeaderMap[parentKey].has(key)
-                                                                                        );
+                                                                                        if (!parentData) return null;
 
-                                                                                        const toggleKey = `${e.country}|${e.ways_to_buy}|${parent}`;
-                                                                                        const isChild = parent !== undefined;
-                                                                                        const isParent = dynamicHeaderMap[key] !== undefined;
+                                                                                        const safeSubtract = (a, b) => {
+                                                                                            const numA = Number(a);
+                                                                                            const numB = Number(b);
+                                                                                            return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
+                                                                                        };
 
+                                                                                        const renderCells = (dataObj, isParent = false, isChild = false) => {
+                                                                                            const orderedKeys = [];
 
-                                                                                        if (parent && !expandedHeaders[toggleKey]) {
-                                                                                            return null;
-                                                                                        }
-
-                                                                                        if (typeof subKeys === 'object' && subKeys !== null) {
-                                                                                            let orderedKeys = [];
-                                                                                            const safeSubtract = (a, b) => {
-                                                                                                const numA = Number(a);
-                                                                                                const numB = Number(b);
-                                                                                                return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
-                                                                                            };
                                                                                             if (differenceToggle) {
-                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
-                                                                                                if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
-                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
-                                                                                                if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['fsi']) });
-                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
+                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: dataObj['gbi'] });
+                                                                                                if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(dataObj['aos'], dataObj['gbi']) });
+                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: dataObj['aos'] });
+                                                                                                if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(dataObj['aos'], dataObj['fsi']) });
+                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: dataObj['fsi'] });
                                                                                             } else {
-                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
-                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
-                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
+                                                                                                if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: dataObj['gbi'] });
+                                                                                                if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: dataObj['aos'] });
+                                                                                                if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: dataObj['fsi'] });
                                                                                             }
 
+                                                                                            const classList = [
+                                                                                                "right-parent-th",
+                                                                                                isParent ? "parent" : "",
+                                                                                                isChild ? "child" : ""
+                                                                                            ].join(" ").trim();
+
                                                                                             return (
-                                                                                                <td key={key} className={`right-parent-th ${isParent ? 'parent' : isChild ? 'child' : ''}`}>
+                                                                                                <td className={classList}>
                                                                                                     {orderedKeys.map((item, index) => (
                                                                                                         <div key={index} className={`right-th right-th-body ${item.className}`}>
                                                                                                             {item.value}
@@ -218,10 +237,24 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                                                     ))}
                                                                                                 </td>
                                                                                             );
-                                                                                        }
+                                                                                        };
 
-                                                                                        return null;
+                                                                                        return (
+                                                                                            <React.Fragment key={parentKey}>
+                                                                                                {renderCells(parentData, true, false)}
+
+                                                                                                {
+                                                                                                    expandedHeaders[toggleKey] &&
+                                                                                                    [...cleanedHeaderMap[parentKey]].map(childKey => {
+                                                                                                        const childData = e[childKey];
+                                                                                                        if (!childData) return null;
+                                                                                                        return renderCells(childData, false, true);
+                                                                                                    })
+                                                                                                }
+                                                                                            </React.Fragment>
+                                                                                        );
                                                                                     })
+
                                                                                 }
                                                                             </tr>
                                                                         </React.Fragment>

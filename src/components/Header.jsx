@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { extractData, getFilterLabel } from '../utils/Functions';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import HeaderDropdown from './HeaderDropdown';
 
 
@@ -9,11 +9,12 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
   const [filter1, setFilter1] = useState([]);
   const [filter3, setFilter3] = useState([]);
   const [filter2, setFilter2] = useState(null);
+  const dropdownRef = useRef(null);
 
   // API CALL FOR GEO DROPDOWN
   const fetchGeoDropdownData = () => {
     setLoading(true);
-    axios.get('https://ryr9j.wiremockapi.cloud/geo')
+    axios.get('https://ryr9j.wiremockapi.cloud/newgeo')
       .then(response => extractData(response.data.result, setCountries, setWaysToBuy, setDateOptions))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -51,6 +52,9 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
   const handleApply = () => {
     setAppliedFilters({ filter1, filter2, filter3 });
     fetchRowData();
+    if (dropdownRef.current) {
+      dropdownRef.current.classList.remove('show');
+    }
   };
 
   const handleReset = () => {
@@ -91,7 +95,7 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
                     <span>{filter2}</span>
                   </div>
                 </div>
-                <ul className="dropdown-menu header-dropdown-menu">
+                <ul className="dropdown-menu header-dropdown-menu" ref={dropdownRef}>
                   <div className="d-flex flex-column justify-content-between dropdown-height">
                     <div className="header-dropdown-body">
                       <div className="col-3">

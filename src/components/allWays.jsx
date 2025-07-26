@@ -16,25 +16,45 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
     const orderedBagStatusKeys = [];
     const seen = new Set();
     const childToParentMap = {};
+    const finalKeys = Object.fromEntries(
+    Object.entries(dynamicHeaderMap).filter(([key, value]) => key !== value)
+);
 
-    Object.keys(dynamicHeaderMap).forEach(parent => {
-        if (!seen.has(parent)) {
-            orderedBagStatusKeys.push({ key: parent, isParent: true });
-            seen.add(parent);
-        }
-        dynamicHeaderMap[parent].forEach(child => {
-            childToParentMap[child] = parent;
-            if (!seen.has(child)) {
-                orderedBagStatusKeys.push({ key: child, isParent: false });
-                seen.add(child);
+    if(finalKeys && Object.keys(finalKeys)){
+        Object.keys(finalKeys).forEach(parent => {
+            if (parent === 'openBags') {
+                childToParentMap[parent] = null;
+                if (!seen.has(parent)) {
+                    orderedBagStatusKeys.push({ key: parent, isParent: false });
+                    seen.add(parent);
+                }
+                return;
             }
+            if (!seen.has(parent)) {
+                orderedBagStatusKeys.push({ key: parent, isParent: true });
+                seen.add(parent);
+            }
+            dynamicHeaderMap[parent].forEach(child => {
+                childToParentMap[child] = parent;
+                if (!seen.has(child)) {
+                    orderedBagStatusKeys.push({ key: child, isParent: false });
+                    seen.add(child);
+                }
+            });
         });
-    });
+    }
 
     const datesToCheck = Object.keys(totalData.all || totalData.selective || {});
     for (let sampleDateKey of datesToCheck) {
         const obj = (allFlag ? totalData.all[sampleDateKey] : totalData.selective[sampleDateKey]) || {};
         Object.keys(obj).forEach(key => {
+            if (key === 'openBags') {
+                if (!seen.has(key)) {
+                    orderedBagStatusKeys.push({ key, isParent: false });
+                    seen.add(key);
+                }
+                return;
+            }
             if (!seen.has(key)) {
                 orderedBagStatusKeys.push({ key, isParent: false });
                 seen.add(key);
@@ -46,6 +66,12 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
     const parentKeys = new Set(
         orderedBagStatusKeys.filter(x => x.isParent).map(x => x.key)
     );
+
+
+    const filteredChildToParentMap = Object.fromEntries(
+        Object.entries(childToParentMap).filter(([key]) => !parentKeys.has(key))
+    );
+
 
     return (
         <div className="all-ways">
@@ -83,11 +109,12 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                         if (!isParent && parentKey && !expandedHeaders[parentKey]) {
                                                                             return null; // hide child if parent collapsed
                                                                         }
+
                                                                         return (
                                                                             <div
                                                                                 key={key}
-                                                                                className={`td-div corner-left-right`}
-                                                                                style={{ backgroundColor: isParent ? '#e8e8ed' : 'transparent', paddingLeft: isParent ? '10px' : '26px', cursor: isParent ? 'pointer' : 'default' }}
+                                                                                className={`td-div corner-left-right ${key == 'openBags' ? 'open-bags' : ''}`}
+                                                                                style={{ backgroundColor: isParent ? '#e8e8ed' : 'transparent', paddingLeft: isParent ? '10px' : '45px', cursor: isParent ? 'pointer' : 'default' }}
                                                                                 onClick={() => {
                                                                                     if (isParent) {
                                                                                         setExpandedHeaders(prev => ({
@@ -161,7 +188,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                                     (allFlag ? totalData.all[i.date] : totalData.selective[i.date]) &&
                                                                                     Object.keys((allFlag ? totalData.all[i.date] : totalData.selective[i.date]))
                                                                                         .filter(key => {
-                                                                                            const parentKey = childToParentMap[key];
+                                                                                            const parentKey = filteredChildToParentMap[key];
                                                                                             return !(parentKey && !expandedHeaders[parentKey]);
                                                                                         })
                                                                                         .map((item, keyIndex) => {
@@ -184,7 +211,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                                                 if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
                                                                                             }
                                                                                             return (
-                                                                                                <td key={keyIndex} className={`right-parent-th ${parentKeys.has(item) ? 'parent' : ''}`}>
+                                                                                                <td key={keyIndex} className={`right-parent-th ${(parentKeys.has(item) || item == 'openBags') ? 'parent' : ''}`}>
                                                                                                     {orderedKeys.map((item, index) => (
                                                                                                         <div key={index} className={`right-th right-th-body ${item.className}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
                                                                                                             {item.value}
