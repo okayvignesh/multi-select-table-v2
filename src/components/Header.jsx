@@ -2,6 +2,7 @@ import axios from 'axios';
 import { extractData, getFilterLabel } from '../utils/Functions';
 import { useEffect, useRef, useState } from 'react';
 import HeaderDropdown from './HeaderDropdown';
+import CalendarComponent from './Calendar';
 
 
 function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData }) {
@@ -32,7 +33,7 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
     setFilter3(waysToBuy.map((i) => i.id));
     setFilter2(dateOptions.reduce((max, curr) =>
       new Date(curr.value) > new Date(max.value) ? curr : max
-    ).label)
+    ).label);
 
     setAppliedFilters(prev => ({
       ...prev,
@@ -43,11 +44,6 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
       filter3: waysToBuy.map((i) => i.id),
     }));
   }, [countries, waysToBuy]);
-
-
-  const handleAsofDateChange = (date) => {
-    setFilter2(date.label);
-  };
 
   const handleApply = () => {
     setAppliedFilters({ filter1, filter2, filter3 });
@@ -72,6 +68,37 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
     });
   }
 
+  const enabledDates = dateOptions.map(({ value }) => {
+    const [month, day, year] = value.split("/").map(Number);
+    return new Date(year, month - 1, day);
+  });
+
+  const getMinMaxDates = (range) => {
+    let startYear, endYear;
+
+    if (Array.isArray(range)) {
+      const [start, end] = range;
+      startYear = start?.getFullYear?.();
+      endYear = end?.getFullYear?.();
+    } else {
+      startYear = endYear = range?.getFullYear?.();
+    }
+
+    if (!startYear || !endYear) {
+      return {
+        minDate: new Date(2024, 0, 1),
+        maxDate: new Date(2025, 11, 31),
+      };
+    }
+
+    return {
+      minDate: new Date(startYear - 1, 0, 1),
+      maxDate: new Date(endYear, 11, 31),
+    };
+  };
+
+  const { minDate, maxDate } = getMinMaxDates(filter2);
+
 
   return (
     <>
@@ -83,6 +110,10 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
               <div className="dropdown">
                 <div className="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
                   <div className="header-grp">
+                    <p>As of: </p>
+                    <span>{filter2}</span>
+                  </div>
+                  <div className="header-grp">
                     <p>Country: </p>
                     <span>{getFilterLabel(filter1, countries)}</span>
                   </div>
@@ -90,14 +121,37 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
                     <p>Ways to Buy: </p>
                     <span>{getFilterLabel(filter3, waysToBuy)}</span>
                   </div>
-                  <div className="header-grp">
-                    <p>As of: </p>
-                    <span>{filter2}</span>
-                  </div>
                 </div>
                 <ul className="dropdown-menu header-dropdown-menu" ref={dropdownRef}>
                   <div className="d-flex flex-column justify-content-between dropdown-height">
                     <div className="header-dropdown-body">
+                      <div className="col-5">
+                        {/* <p className="column-text">As of Date</p>
+                        <div className="header-column">
+                          {
+                            loading ? <p>Loading...</p> :
+                              dateOptions.sort((a, b) => new Date(b.value) - new Date(a.value)).map((date, index) => (
+                                <li
+                                  key={index}
+                                  className={filter2 === date.label ? 'selected' : ''}
+                                  onClick={() => handleAsofDateChange(date)}
+                                >
+                                  {date.label}
+                                </li>
+                              ))
+                          }
+                        </div> */}
+                        <p className="column-text">As of Date</p>
+                        <CalendarComponent
+                          selectRange={true}
+                          value={filter2}
+                          setValue={setFilter2}
+                          enabledDates={enabledDates}
+                          minDate={minDate}
+                          maxDate={maxDate}
+                          dateOptions={dateOptions}
+                        />
+                      </div>
                       <div className="col-3">
                         <p className="column-text">Country</p>
                         <HeaderDropdown
@@ -119,23 +173,6 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
                           setFilter={setFilter3}
                           filterType="filter3"
                         />
-                      </div>
-                      <div className="col-3">
-                        <p className="column-text">As of Date</p>
-                        <div className="header-column">
-                          {
-                            loading ? <p>Loading...</p> :
-                              dateOptions.sort((a, b) => new Date(b.value) - new Date(a.value)).map((date, index) => (
-                                <li
-                                  key={index}
-                                  className={filter2 === date.label ? 'selected' : ''}
-                                  onClick={() => handleAsofDateChange(date)}
-                                >
-                                  {date.label}
-                                </li>
-                              ))
-                          }
-                        </div>
                       </div>
                     </div>
                     <div className="header-dropdown-footer">
