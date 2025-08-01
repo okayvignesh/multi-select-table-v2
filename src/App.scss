@@ -175,13 +175,9 @@
 
 .main-body {
     background-color: #fbfbfd;
-    height: calc(100vh - 145px);
     position: relative;
 
     .quick-filter {
-        position: absolute;
-        right: 1.5rem;
-        top: 2.5rem;
         display: flex;
         align-items: center;
         gap: 20px;
@@ -253,7 +249,7 @@
 
 .summary,
 .detailed {
-    padding: 20px;
+    padding: 10px 20px 0 20px;
 
     .card-container {
         background-color: white;
@@ -263,12 +259,28 @@
         box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
         // overflow-x: scroll;
         height: fit-content;
+
+        ::-webkit-scrollbar {
+            width: 1px;
+            height: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
     }
 
 
     .all-ways {
         margin-bottom: 3rem;
         margin-top: 10px;
+        position: relative;
 
         .title {
             font-weight: 600;
@@ -384,6 +396,24 @@
     display: flex;
     font-size: 14px;
 
+    .left-parent {
+        height: calc(100vh - 275px);
+        overflow: scroll;
+
+        .empty-row {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        thead {
+            position: sticky;
+            top: 31px;
+            z-index: 1;
+        }
+    }
+
     .left-table,
     .right-table table {
         border-collapse: collapse;
@@ -465,6 +495,7 @@
     .right-table {
         overflow-x: auto;
         display: flex;
+        height: calc(100vh - 275px);
 
         .till-day-class {
             height: 30px;
@@ -474,6 +505,11 @@
                 color: white;
             }
 
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
         }
 
         .right-parent-th {
@@ -725,4 +761,38 @@ button {
     padding: 5px 15px;
     margin: 20px auto;
     // width: 100%;
+}
+
+.select-all {
+    background-color: transparent;
+    border: none;
+    color: #0171e3;
+    cursor: pointer;
+    padding: 5px 15px;
+    width: 100%;
+    text-align: start;
+    position: sticky;
+    top: 0;
+    background-color: white;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+.sticky-toggle {
+    position: sticky;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    top: 150px;
+}
+
+.allways-sticky{
+    position: sticky;
+    top: 120px;
+    padding: 10px;
+    background: transparent;
+    z-index: 1;
+    justify-content: flex-end;
 }

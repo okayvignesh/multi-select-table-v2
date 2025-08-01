@@ -6,6 +6,7 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
     const [options, setOptions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [appliedItems, setAppliedItems] = useState([]);
+    const [disableApply, setDisableApply] = useState(false);
     const dropdownRef = useRef(null);
 
     const toggleDropdown = () => setIsOpen(!isOpen);
@@ -18,6 +19,9 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
     // };
 
     const handleItemClick = (date) => {
+        if (selectedItems.length === 0 && date) {
+            setDisableApply(false);
+        }
         if (selectedItems.includes(date)) {
             if (selectedItems.length > 1) {
                 setSelectedItems(selectedItems.filter(item => item !== date));
@@ -37,6 +41,16 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
         setSelectedItems(appliedItems);
         setIsOpen(false);
     };
+
+    const toggleSelect = () => {
+        if (selectedItems.length === options.length) {
+            setSelectedItems([]);
+            setDisableApply(true);
+        } else {
+            setSelectedItems(options.map(opt => opt.date));
+            setDisableApply(false);
+        }
+    }
 
     useEffect(() => {
         if (tillDateOptions.length > 0) {
@@ -79,10 +93,10 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
                     ? options.find(o => o.date === appliedItems[0])?.label || 'Select'
                     : 'No Data'}
             </button>
-
             {options.length > 0 && (
                 <div className={`dropdown-menu custom-end ${isOpen ? 'show' : ''}`}>
                     <div style={{ height: "400px", overflowY: 'scroll' }}>
+                        <button className='select-all' onClick={toggleSelect}>{selectedItems.length === options.length ? 'Deselect' : 'Select'} All</button>
                         {options.map(option => (
                             <div key={option.id} className="dropdown-item">
                                 <div className="form-check">
@@ -101,7 +115,7 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
                     </div>
                     <div className="border-top border-bottom bg-white" style={{ position: 'sticky', bottom: 0 }}>
                         <div className="d-flex justify-content-around p-2">
-                            <button className="btn btn-primary btn-sm px-3" onClick={handleApply}>Apply</button>
+                            <button className="btn btn-primary btn-sm px-3" onClick={handleApply} disabled={disableApply}>Apply</button>
                             <button className="btn btn-secondary btn-sm px-3" onClick={handleCancel}>Cancel</button>
                         </div>
                     </div>

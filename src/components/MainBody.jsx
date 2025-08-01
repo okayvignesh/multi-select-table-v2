@@ -36,45 +36,6 @@ function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData,
     return (
         <>
             <div className="main-body">
-                <div className="quick-filter">
-                    <label className="toggle-switch">
-                        <input
-                            type="checkbox"
-                            checked={differenceToggle}
-                            onChange={handleToggle}
-                        />
-                        <span className="slider"></span>
-                    </label>
-                    <div className="checkboxes">
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="aos"
-                                checked={aos}
-                                onChange={handleCheckboxChange}
-                            />
-                            AOS
-                        </label>
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="fsi"
-                                checked={fsi}
-                                onChange={handleCheckboxChange}
-                            />
-                            FSI
-                        </label>
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="gbi"
-                                checked={gbi}
-                                onChange={handleCheckboxChange}
-                            />
-                            GBI
-                        </label>
-                    </div>
-                </div>
                 {activeTab === 'summary' ? (
                     <Summary
                         appliedFilters={appliedFilters}
@@ -89,6 +50,8 @@ function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData,
                         apiStatus={apiStatus}
                         dynamicHeaderMap={dynamicHeaderMap}
                         differenceToggle={differenceToggle}
+                        handleCheckboxChange={handleCheckboxChange}
+                        handleToggle={handleToggle}
                     />
                 ) : (
                     <Detailed
@@ -102,6 +65,8 @@ function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData,
                         apiStatus={apiStatus}
                         dynamicHeaderMap={dynamicHeaderMap}
                         differenceToggle={differenceToggle}
+                        handleCheckboxChange={handleCheckboxChange}
+                        handleToggle={handleToggle}
                     />
                 )}
             </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { IoIosArrowDown, IoIosArrowForward } from 'react-icons/io';
 
-function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summaryWTB, aos, fsi, gbi, differenceToggle, dynamicHeaderMap, apiStatus }) {
+function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summaryWTB, aos, fsi, gbi, differenceToggle, dynamicHeaderMap, apiStatus, handleCheckboxChange, handleToggle, appliedFilters }) {
 
     const clearedWTB = summaryWTB && summaryWTB.length ? summaryWTB.map(text => text.replace(/\s*\(.*?\)/g, '')).join(', ') : '';
 
@@ -75,13 +75,58 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
 
     return (
         <div className="all-ways">
-            <p className="title">Ways to Buy &nbsp;
+            <p className={`title ${allFlag ? '' : 'position-absolute'}`}>Ways to Buy &nbsp;
                 {
                     allFlag ?
                         <span>( All Ways to Buy )</span>
                         : <span>( {clearedWTB} )</span>
                 }
             </p>
+            {
+                !allFlag && (
+                    <div className="quick-filter allways-sticky">
+                        <div className="d-flex align-items-center column-gap-2" style={{ background: '#fbfbfd' }}>
+                            <label className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={differenceToggle}
+                                    onChange={handleToggle}
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <div className="checkboxes">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="aos"
+                                        checked={aos}
+                                        onChange={handleCheckboxChange}
+                                    />
+                                    AOS
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="fsi"
+                                        checked={fsi}
+                                        onChange={handleCheckboxChange}
+                                    />
+                                    FSI
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="gbi"
+                                        checked={gbi}
+                                        onChange={handleCheckboxChange}
+                                    />
+                                    GBI
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
             <div className="card-container">
                 <div className="table-container py-0">
                     {
@@ -89,7 +134,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                             : apiStatus && apiStatus.rowdata ? <p>No data to show</p>
                                 :
                                 <>
-                                    <div className="col-2 left-parent">
+                                    <div className="col-2 left-parent" style={{ height: 'fit-content' }}>
                                         <div className="empty-row"></div>
                                         <table className="table left-table">
                                             <thead>
@@ -144,7 +189,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                         </table>
                                     </div>
 
-                                    <div className="col-10 right-table" >
+                                    <div className="col-10 right-table" style={{ height: 'fit-content' }}>
                                         {
                                             filteredData && filteredData
                                                 .filter(i => tillDates.some(obj => {

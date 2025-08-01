@@ -81,13 +81,15 @@ function App() {
 
   return (
     <div>
-      <Header dateOptions={dateOptions} setDateOptions={setDateOptions}
-        appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters}
-        countries={countries} setCountries={setCountries}
-        waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
-        fetchRowData={fetchRowData}
-      />
-      <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} />
+      <div class="position-sticky" style={{ top: '0', zIndex: '3', backgroundColor: 'white' }}>
+        <Header dateOptions={dateOptions} setDateOptions={setDateOptions}
+          appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters}
+          countries={countries} setCountries={setCountries}
+          waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
+          fetchRowData={fetchRowData}
+        />
+        <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} />
+      </div>
       <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi} apiStatus={apiStatus}
         appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} dynamicHeaderMap={dynamicHeaderMap} />
       <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap} 

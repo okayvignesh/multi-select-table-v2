@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoIosArrowDown } from "react-icons/io";
 
 
-function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos, fsi, gbi, differenceToggle, dynamicHeaderMap, apiStatus }) {
+function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos, fsi, gbi, differenceToggle, dynamicHeaderMap, apiStatus, handleCheckboxChange, handleToggle }) {
+
+    const leftTableRef = useRef(null);
+    const rightTableRef = useRef(null);
 
     const toTitleCase = (camelCase) => {
         return camelCase
@@ -21,11 +24,72 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
         if (key == 'openBags') cleanedHeaderMap[key] = new Set(['openBags']);
     });
 
-    console.log(cleanedHeaderMap)
+
+
+    const syncScroll = () => {
+        if (leftTableRef.current && rightTableRef.current) {
+            leftTableRef.current.onscroll = () => {
+                rightTableRef.current.scrollTop = leftTableRef.current.scrollTop;
+            };
+            rightTableRef.current.onscroll = () => {
+                leftTableRef.current.scrollTop = rightTableRef.current.scrollTop;
+            };
+        }
+    };
+
+    React.useEffect(() => {
+        syncScroll();
+        return () => {
+            if (leftTableRef.current) leftTableRef.current.onscroll = null;
+            if (rightTableRef.current) rightTableRef.current.onscroll = null;
+        };
+    }, []);
+
 
     return (
         <div className="all-ways">
-            <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
+            <div className="sticky-toggle">
+                <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
+                <div className="quick-filter">
+                    <label className="toggle-switch">
+                        <input
+                            type="checkbox"
+                            checked={differenceToggle}
+                            onChange={handleToggle}
+                        />
+                        <span className="slider"></span>
+                    </label>
+                    <div className="checkboxes">
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="aos"
+                                checked={aos}
+                                onChange={handleCheckboxChange}
+                            />
+                            AOS
+                        </label>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="fsi"
+                                checked={fsi}
+                                onChange={handleCheckboxChange}
+                            />
+                            FSI
+                        </label>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="gbi"
+                                checked={gbi}
+                                onChange={handleCheckboxChange}
+                            />
+                            GBI
+                        </label>
+                    </div>
+                </div>
+            </div>
             <div className="card-container">
                 <div className="table-container py-0">
                     {
@@ -33,9 +97,9 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                             : apiStatus && apiStatus.rowdata ? <p>No data to show</p>
                                 :
                                 <>
-                                    <div className="col-6 left-parent">
+                                    <div className="col-6 left-parent" ref={leftTableRef}>
                                         <div className="empty-row"></div>
-                                        <table className="table left-table" style={{tableLayout: 'fixed'}}>
+                                        <table className="table left-table" style={{ tableLayout: 'fixed' }}>
                                             <thead>
                                                 <tr>
                                                     <th className="fixed-height-header corner-left-right" style={{ width: "30%" }}>Country</th>
@@ -52,7 +116,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                 <div className='gap-div'></div>
                                                                 <tr>
                                                                     <td className="corner-left" style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}>{i.country}</td>
-                                                                    <td className="corner-left" style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}>
+                                                                    <td className="corner-left position-relative" style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}>
                                                                         {
                                                                             (() => {
                                                                                 const match = i.ways_to_buy.match(/^([^\(]+)(\(.+\))?$/);
@@ -137,7 +201,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="col-6 right-table" >
+                                    <div className="col-6 right-table" ref={rightTableRef}>
                                         {
                                             filteredData && filteredData
                                                 .filter(i => tillDates.some(obj => {
