@@ -1,32 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTillDates } from "../utils/Functions";
 
-function TillDateDropdown({ tillDateOptions, setTillDates }) {
+function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppliedItems }) {
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [appliedItems, setAppliedItems] = useState([]);
     const [disableApply, setDisableApply] = useState(false);
     const dropdownRef = useRef(null);
 
     const toggleDropdown = () => setIsOpen(!isOpen);
-
-    // const handleItemClick = (date) => {
-    //     const newSelectedItems = selectedItems.includes(date)
-    //         ? selectedItems.filter(item => item !== date)
-    //         : [...selectedItems, date];
-    //     setSelectedItems(newSelectedItems);
-    // };
 
     const handleItemClick = (date) => {
         if (selectedItems.length === 0 && date) {
             setDisableApply(false);
         }
         if (selectedItems.includes(date)) {
-            if (selectedItems.length > 1) {
+            if (selectedItems.length > 1) {/*
+                const newSelectedItems = selectedItems.includes(date)
+                ? selectedItems.filter(item => item !== date)
+                : [...selectedItems, date];
+                setSelectedItems(newSelectedItems);*/
                 setSelectedItems(selectedItems.filter(item => item !== date));
             }
-        } else {
+        }
+        else {
             setSelectedItems([...selectedItems, date]);
         }
     };
@@ -34,11 +31,6 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
     const handleApply = () => {
         setAppliedItems(selectedItems);
         setTillDates(options.filter(opt => selectedItems.includes(opt.date)));
-        setIsOpen(false);
-    };
-
-    const handleCancel = () => {
-        setSelectedItems(appliedItems);
         setIsOpen(false);
     };
 
@@ -52,15 +44,30 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
         }
     }
 
+    const handleCancel = () => {
+        setSelectedItems(appliedItems);
+        setIsOpen(false);
+    };
+
     useEffect(() => {
         if (tillDateOptions.length > 0) {
             const processedOptions = getTillDates(tillDateOptions, true);
             setOptions(processedOptions);
+            let appliedDates = [];
+            let tillAppliedDates = [];
 
-            const allDates = processedOptions.map(option => option.date);
-            setSelectedItems(allDates);
-            setAppliedItems(allDates);
-            setTillDates(processedOptions);
+
+            if (appliedItems && appliedItems.length) {
+                appliedDates = processedOptions.filter(option => appliedItems.includes(option.date)).map(option => option.date);
+                tillAppliedDates = processedOptions.filter(option => appliedItems.includes(option.date));
+            } else {
+                appliedDates = processedOptions.map(option => option.date);
+                tillAppliedDates = processedOptions;
+            }
+
+            setAppliedItems(appliedDates);
+            setSelectedItems(appliedDates);
+            setTillDates(tillAppliedDates);
         }
     }, [tillDateOptions]);
 
@@ -93,12 +100,13 @@ function TillDateDropdown({ tillDateOptions, setTillDates }) {
                     ? options.find(o => o.date === appliedItems[0])?.label || 'Select'
                     : 'No Data'}
             </button>
+
             {options.length > 0 && (
                 <div className={`dropdown-menu custom-end ${isOpen ? 'show' : ''}`}>
                     <div style={{ height: "400px", overflowY: 'scroll' }}>
                         <button className='select-all' onClick={toggleSelect}>{selectedItems.length === options.length ? 'Deselect' : 'Select'} All</button>
                         {options.map(option => (
-                            <div key={option.id} className="dropdown-item">
+                            <div key={option.date} className="dropdown-item">
                                 <div className="form-check">
                                     <input
                                         type="checkbox"

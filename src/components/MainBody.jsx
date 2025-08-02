@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Summary from './Summary'
 import Detailed from './Detailed'
 
-function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData, tillDates, summaryWTB, differenceToggle, setDifferenceToggle, countries, waysToBuy, aos, fsi, gbi, setAos, setFsi, setGbi, dynamicHeaderMap, apiStatus }) {
+function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData, tillDates, summaryWTB, differenceToggle, setDifferenceToggle, countries, waysToBuy, aos, fsi, gbi, setAos, setFsi, setGbi, dynamicHeaderMap }) {
     useEffect(() => {
         const checkedCount = [aos, fsi, gbi].filter(Boolean).length
         if (checkedCount < 2 && differenceToggle) {
@@ -47,7 +47,6 @@ function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData,
                         aos={aos}
                         fsi={fsi}
                         gbi={gbi}
-                        apiStatus={apiStatus}
                         dynamicHeaderMap={dynamicHeaderMap}
                         differenceToggle={differenceToggle}
                         handleCheckboxChange={handleCheckboxChange}
@@ -62,7 +61,6 @@ function MainBody({ activeTab, appliedFilters, loading, filteredData, totalData,
                         aos={aos}
                         fsi={fsi}
                         gbi={gbi}
-                        apiStatus={apiStatus}
                         dynamicHeaderMap={dynamicHeaderMap}
                         differenceToggle={differenceToggle}
                         handleCheckboxChange={handleCheckboxChange}

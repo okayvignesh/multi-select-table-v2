@@ -56,7 +56,7 @@ export function getTillDates(dateOptions) {
 }
 
 
-export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap }) => {
+export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems }) => {
     const waysToBuy = new Set();
     const comboOrder = [];
     const seenCombos = new Set();
@@ -113,7 +113,9 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
         let statusKey = bagStatusMap[item.Bag_Status];
 
         if (!headerKey) return;
-        if (!statusKey && headerKey == 'openBags') statusKey = "openBags";
+        if (!statusKey && headerKey==='openBags'){
+            statusKey = 'openBags';
+        }
 
         if (!seenCombos.has(groupKey)) {
             seenCombos.add(groupKey);
@@ -159,7 +161,6 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
 
     Object.keys(dateGroups).forEach(date => {
         const groupData = dateGroups[date];
-
         comboOrder.forEach(combo => {
             const [country, ways_to_buy] = combo.split("__");
             if (!groupData[combo]) {
@@ -180,7 +181,7 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
                 ways_to_buy: item.ways_to_buy,
                 fsi_status: item.fsi_status
             };
-
+                //console.log("sk dynamicBagStatuses", dynamicBagStatuses, _raw, dynamicHeaderToChildren)
             dynamicBagStatuses.forEach(({ key }) => {
                 let directData = (_raw[key] && _raw[key][key]) || null;
 
@@ -217,7 +218,6 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
                 }
             });
 
-
             groupData[combo] = flattened;
         });
     });
@@ -229,12 +229,11 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
 
     setFilteredData(finalResult);
     setDynamicHeaderMap(dynamicHeaderToChildren);
-    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions });
+    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions, appliedItems });
     calculateTotals({ data: finalResult, setTotalData, setSummaryWTB, dynamicHeaderMap: dynamicHeaderToChildren });
 };
 
-
-const pushTillDateOptions = ({ dates, setTillDateOptions }) => {
+const pushTillDateOptions = ({ dates, setTillDateOptions, appliedItems }) => {
     const options = [];
     dates.forEach((date, index) => {
         options.push({
@@ -384,11 +383,11 @@ export const exportToExcel = async ({
         const labelIndex = dates.length - index;
         const spans = [];
         if (gbiEnabled) spans.push("GBI");
-        if (showDiff && aosEnabled && gbiEnabled) spans.push("AOS - GBI");
+        if (showDiff && aosEnabled && gbiEnabled) spans.push("GBI - AOS");
         if (aosEnabled) spans.push("AOS");
         if (showDiff && aosEnabled && fsiEnabled) spans.push("AOS - FSI");
         if (fsiEnabled) spans.push("FSI");
-
+         if (showDiff && gbiEnabled && fsiEnabled) spans.push("GBI - FSI");
         headerRow1.push(`Till Day ${labelIndex} EOD`);
         for (let i = 1; i < spans.length; i++) headerRow1.push(null);
 
@@ -449,7 +448,6 @@ export const exportToExcel = async ({
 
     rowMap.forEach((dateData, key) => {
         const [country, way] = key.split("||");
-
         const cleanedHeaderMap = {};
 
         Object.entries(dynamicHeaderMap).forEach(([key, set]) => {
@@ -477,11 +475,11 @@ export const exportToExcel = async ({
                     const gbi = parseOrDash(statusData?.gbi);
                     const aos = parseOrDash(statusData?.aos);
                     let fsi = statusData?.fsi;
-                    if (fsiFlag === "N") fsi = "Null"; else fsi = parseOrDash(fsi);
+                    if (fsiFlag === "N") fsi = "-"; else fsi = parseOrDash(fsi);
 
                     if (gbiEnabled) row.push(safeValue(gbi));
                     if (showDiff && aosEnabled && gbiEnabled) {
-                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? aos - gbi : "-";
+                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? gbi - aos : "-";
                         row.push(safeValue(diffAosGbi));
                     }
                     if (aosEnabled) row.push(safeValue(aos));
@@ -490,6 +488,10 @@ export const exportToExcel = async ({
                         row.push(safeValue(diffAosFsi));
                     }
                     if (fsiEnabled) row.push(safeValue(fsi));
+                    if (showDiff && gbiEnabled && fsiEnabled) {
+                        const diffGbiFsi = (typeof aos === "number" && typeof fsi === "number") ? gbi - fsi : "-";
+                        row.push(safeValue(diffGbiFsi));
+                    }
                 });
 
                 const newRow = worksheet.addRow(row);
@@ -507,7 +509,7 @@ export const exportToExcel = async ({
             }
 
             children.forEach(childKey => {
-                if (childKey === 'openBags') return;
+                if(childKey==='openBags') return;
                 let hasData = false;
                 for (const date of dates) {
                     const s = dateData[date]?.[childKey];
@@ -525,7 +527,7 @@ export const exportToExcel = async ({
                     const gbi = parseOrDash(statusData?.gbi);
                     const aos = parseOrDash(statusData?.aos);
                     let fsi = statusData?.fsi;
-                    if (fsiFlag === "N") fsi = "Null"; else fsi = parseOrDash(fsi);
+                    if (fsiFlag === "N") fsi = "-"; else fsi = parseOrDash(fsi);
 
                     if (gbiEnabled) row.push(safeValue(gbi));
                     if (showDiff && aosEnabled && gbiEnabled) {
@@ -672,7 +674,7 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
                 const aos = parseOrDash(statusData?.aos);
                 let fsi = parseOrDash(statusData?.fsi);
                 if (statusData?.FSI_Flag === "N" && statusData?.FSI_Cnt === '') {
-                    fsi = "Null";
+                    fsi = "-";
                 }
 
                 if (gbiEnabled) row.push(safeValue(gbi));

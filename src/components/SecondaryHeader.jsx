@@ -1,6 +1,6 @@
 import TillDateDropdown from './TillDateDropdown';
 
-function SecondaryHeader({ setActiveTab, activeTab, tillDateOptions, setTillDates }) {
+function SecondaryHeader({ setActiveTab, activeTab, tillDateOptions, setTillDates, appliedItems, setAppliedItems }) {
     const handleTabClick = (tabName) => {
         setActiveTab(tabName);
     }
@@ -25,14 +25,14 @@ function SecondaryHeader({ setActiveTab, activeTab, tillDateOptions, setTillDate
                         onClick={() => handleTabClick('detailed')}
                         style={{ cursor: 'pointer' }}
                     >
-                        Detailed report
+                        Detailed Report
                     </a>
                 </li>
             </ul>
 
             <div className="mb-3">
                 <label htmlFor="exampleFormControlInput1" className="form-label">Data</label>
-                <TillDateDropdown setTillDates={setTillDates} tillDateOptions={tillDateOptions} />
+                <TillDateDropdown setTillDates={setTillDates} tillDateOptions={tillDateOptions} appliedItems={appliedItems} setAppliedItems={setAppliedItems} />
             </div>
         </div>
     )
