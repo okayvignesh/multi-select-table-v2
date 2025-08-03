@@ -229,11 +229,11 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                 <tr className='blue'>
                                                                     <th className='right-parent-th fixed-height-header'>
                                                                         {gbi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>}
-                                                                        {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3'> GBI - AOS</div>}
+                                                                        {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> GBI - AOS</div>}
                                                                         {aos && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>}
-                                                                        {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3'> AOS - FSI</div>}
+                                                                        {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> AOS - FSI</div>}
                                                                         {fsi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>}
-                                                                        {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3'> GBI - FSI</div>}
+                                                                        {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> GBI - FSI</div>}
                                                                     </th>
                                                                 </tr>
                                                             </thead>
