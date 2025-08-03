@@ -83,21 +83,26 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                 <span>( All Ways to Buy )</span>
                                 <span className='lower-table-indicate'>This section includes only GBI and AOS, as Full Price and Carrier Financing are not applicable to FSI.</span>
                             </>
-                            : <span>( {clearedWTB} )</span>
+                            : <span>{clearedWTB ? `( ${clearedWTB} )` : null}</span>
                     }
                 </p>
                 {
                     !allFlag && (
                         <div className="quick-filter">
-                            <div className="d-flex align-items-center column-gap-2" style={{ background: '#fbfbfd' }}>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={differenceToggle}
-                                        onChange={handleToggle}
-                                    />
-                                    <span className="slider"></span>
-                                </label>
+                            <div className="d-flex align-items-center" style={{ background: '#fbfbfd', gap: '20px' }}>
+                                <div className='d-flex align-items-center column-gap-1'>
+                                    <label className="toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={differenceToggle}
+                                            onChange={handleToggle}
+                                        />
+                                        <span className="slider"></span>
+                                    </label>
+                                    <div className="label-checkbox">
+                                        Show Differences
+                                    </div>
+                                </div>
                                 <div className="checkboxes">
                                     <label>
                                         <input
@@ -178,7 +183,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                                         <IoIosArrowDown className="cursor-pointer" /> :
                                                                                         <IoIosArrowForward className="cursor-pointer" />
                                                                                 )}
-                                                                                {toTitleCase(key)}
+                                                                                <span className='overflow-status'>{toTitleCase(key)}</span>
                                                                             </div>
                                                                         );
                                                                     })
@@ -213,8 +218,11 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                                 <tr className="till-day-class">
                                                                     <th style={{ width: "30%" }}>
                                                                         <div className="d-flex px-2">
-                                                                            <p>{tillDateObj?.label || ''}</p>
-                                                                            <p>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</p>
+                                                                            <p className='tillday-elipsses'>
+                                                                                <span>{tillDateObj?.label || ''}</span>
+                                                                                <span style={{color: '#bdbfc5'}}>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
+                                                                            </p>
+                                                                            {/* <p className='date-elipsses'>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</p> */}
                                                                         </div>
                                                                     </th>
                                                                 </tr>

@@ -88,9 +88,6 @@ const CalendarComponent = ({
                     )
                 }
             </div>
-            <div className='w-100 d-flex justify-content-center align-items-center'>
-                <button className='calendar-latest' onClick={goToLatestDate}>Latest Date</button>
-            </div>
         </>
     );
 };

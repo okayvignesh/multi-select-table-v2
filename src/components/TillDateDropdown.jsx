@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTillDates } from "../utils/Functions";
 
-function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppliedItems }) {
+function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppliedItems, dayDescMap }) {
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -51,7 +51,7 @@ function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppl
 
     useEffect(() => {
         if (tillDateOptions.length > 0) {
-            const processedOptions = getTillDates(tillDateOptions, true);
+            const processedOptions = getTillDates(tillDateOptions, dayDescMap);
             setOptions(processedOptions);
             let appliedDates = [];
             let tillAppliedDates = [];
@@ -88,6 +88,8 @@ function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppl
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOpen]);
+
+    console.log(tillDateOptions)
 
     return (
         <div className="dropdown tilldate-dp" ref={dropdownRef}>

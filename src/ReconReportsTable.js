@@ -1,11 +1,12 @@
 import './ReconReportsTable.scss';
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MainBody from './components/MainBody';
 import SecondaryHeader from './components/SecondaryHeader';
 import { transformBagData } from "./utils/Functions"
+import ErrorModal from './components/ErrorModal';
 // import ServiceCallsUtil from './util/ServiceCallsUtil';
 // import Constants from './util/Constants';
 
@@ -31,7 +32,9 @@ function ReconReportsTable() {
     filter2: "17/07/2025",
     filter3: ["ALL"]
   });
-
+  const [dayDescMap, setDayDescMap] = useState({});
+  const [apiStatus, setApiStatus] = useState({});
+  const modalRef = useRef(null);
 
   const fetchRowData = () => {
 
@@ -63,11 +66,45 @@ function ReconReportsTable() {
     //                 setLoading(false)
     // });
 
-    axios.get('https://ryr9j.wiremockapi.cloud/rowdata')
-      .then(response => transformBagData({ data: response.data.result, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems }))
-      .catch(console.error)
+    axios.get('https://7kyd3.wiremockapi.cloud/rowdata')
+      .then(response => processData(response.data.result))
+      .catch(error => {
+        let message = "Unknown error";
+
+        if (error.code === 'ECONNABORTED' || error.response) {
+          message = "Timeout occurred while fetching rowdata";
+        } else if (error.response) {
+          message = `Error while fetching rowdata API`;
+        } else {
+          message = "Failed to fetch rowdata";
+        }
+
+        setApiStatus(prev => ({
+          ...prev,
+          rowdata: message
+        }));
+        showModal();
+      })
       .finally(() => setLoading(false));
   };
+
+  const processData = (data) => {
+    if (data && !data.length || !data) {
+      setApiStatus(prev => ({
+        ...prev,
+        rowdata: "Empty response from rowdata API"
+      }));
+    } else {
+      transformBagData({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems, setDayDescMap })
+    }
+  }
+
+  const showModal = () => {
+    if (modalRef.current) {
+      modalRef.current.click();
+    }
+  };
+
 
   useEffect(() => {
     fetchRowData();
@@ -87,11 +124,13 @@ function ReconReportsTable() {
           waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
           fetchRowData={fetchRowData}
         />
-        <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} appliedItems={appliedItems} setAppliedItems={setAppliedItems} />
+        <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} appliedItems={appliedItems} setAppliedItems={setAppliedItems} dayDescMap={dayDescMap} />
       </div>
-      <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi}
+      <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi} apiStatus={apiStatus}
         appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} dynamicHeaderMap={dynamicHeaderMap} />
-      <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap} />
+      <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap}
+        fetchRowData={fetchRowData} setApiStatus={setApiStatus} showModal={showModal} apiStatus={apiStatus} />
+      <ErrorModal modalRef={modalRef} apiStatus={apiStatus} />
     </div>
   );
 }

@@ -343,6 +343,25 @@
     display: flex;
     justify-content: space-around;
     font-weight: 400;
+    align-items: center;
+
+    .action-button {
+        background-color: white;
+        border: 1px solid #0171e3;
+        color: #0171e3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 15px;
+        border-radius: 5px;
+        margin: 0 5px;
+        font-size: 13px;
+
+        &:hover {
+            background-color: #0171e3;
+            color: white;
+        }
+    }
 
     .footer-box {
         p {
@@ -355,7 +374,7 @@
         }
 
         width: 25%;
-        border-right: 1px solid gray;
+        // border-right: 1px solid gray;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -382,6 +401,12 @@
                     gap: 5px;
                     font-size: 14px;
                     padding: 5px 10px;
+
+                    a {
+                        span {
+                            font-size: 12px !important;
+                        }
+                    }
                 }
             }
         }
@@ -492,7 +517,7 @@
     .td-div.child {
         padding-left: 44px;
 
-        
+
         .overflow-status {
             white-space: nowrap;
             width: inherit;
@@ -624,6 +649,13 @@ button {
 .corner-left-right {
     text-align: start !important;
     justify-content: start !important;
+
+    .overflow-status {
+        white-space: nowrap;
+        width: inherit;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
 }
 
 .open-bags-row {
@@ -674,4 +706,176 @@ button {
     background: transparent;
     z-index: 1;
     justify-content: flex-end;
+}
+
+.label-checkbox {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+
+// .tillday-elipsses {
+//     display: flex;
+//     justify-content: space-between;
+//     width: 100%;
+//     // max-width: 110px;
+//     // width: fit-content;
+//     white-space: nowrap;
+//     // text-overflow: ellipsis;
+//     overflow: hidden;
+// }
+
+.tillday-elipsses {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.tillday-elipsses span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+
+.calendar-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+
+
+
+
+    .week-div-calendar {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+
+        span {
+            font-size: 12px !important;
+            font-weight: 500;
+            padding: 5px 2px;
+            border-top: 1px solid white;
+            border-bottom: 1px solid white;
+        }
+    }
+
+    .week-div-empty {
+        background-color: white;
+        height: 29px;
+        width: 30px;
+        position: absolute;
+        top: 60px;
+    }
+
+
+    .react-calendar {
+        font-family: "Inter", sans-serif !important;
+        border: none;
+    }
+
+    span {
+        font-size: 12px !important;
+    }
+
+    .react-calendar__navigation__prev-button {
+        // display: none;
+    }
+
+    .react-calendar__month-view__weeks {
+        min-height: 300px;
+        display: grid;
+        grid-template-rows: repeat(5, 1fr);
+    }
+
+    // day cell
+    .react-calendar__tile.react-calendar__month-view__days__day {
+        padding: 5px 2px;
+        border: 1px solid white;
+
+        abbr {
+            font-size: 14px;
+        }
+    }
+
+    .react-calendar__month-view__weekdays__weekday {
+        text-transform: capitalize;
+
+        abbr {
+            font-weight: 500;
+            font-size: 12px;
+            text-decoration: none;
+        }
+    }
+
+    // month year header
+    .react-calendar__navigation__label {
+        span {
+            font-size: 15px !important;
+        }
+    }
+
+
+    // current day cell
+    .react-calendar__tile.react-calendar__tile--now.react-calendar__tile--hasActive.react-calendar__month-view__days__day.react-calendar__month-view__days__day--weekend {
+        color: #0171e3;
+    }
+
+    // weekend day cell
+    .react-calendar__tile.react-calendar__month-view__days__day.react-calendar__month-view__days__day--weekend:not(:disabled) {
+        color: black;
+    }
+
+    //selectable day cell
+    .react-calendar__tile.react-calendar__month-view__days__day:not(:disabled) {
+        background-color: #e4f2ff;
+
+        &:hover {
+            background-color: #0171e3;
+            color: white;
+        }
+    }
+
+
+    .react-calendar__tile.react-calendar__month-view__days__day:disabled {
+        background-color: #cdcdcd;
+        color: #707070;
+    }
+
+    // selected day cell
+    .react-calendar__tile.react-calendar__tile--active.react-calendar__tile--range.react-calendar__tile--rangeStart.react-calendar__tile--rangeEnd.react-calendar__tile--rangeBothEnds.react-calendar__month-view__days__day {
+        background-color: #0171e3;
+        color: white;
+    }
+
+
+    .react-calendar__month-view__weekNumbers {
+        background-color: transparent;
+
+        // Week number cell
+        .react-calendar__tile {
+            padding: 5px 2px;
+            border: 1px solid white;
+            padding-left: 13px;
+
+            span {
+                font-size: 12px !important;
+                font-weight: 500 !important;
+            }
+        }
+    }
+
+}
+
+.calendar-latest {
+    background-color: #0171e3;
+    color: white;
+    border-radius: 3px;
+    padding: 5px 15px;
+    margin: 20px auto;
+    // width: 100%;
 }

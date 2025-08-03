@@ -38,14 +38,19 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
             <div className="sticky-toggle">
                 <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
                 <div className="quick-filter">
-                    <label className="toggle-switch">
-                        <input
-                            type="checkbox"
-                            checked={differenceToggle}
-                            onChange={handleToggle}
-                        />
-                        <span className="slider"></span>
-                    </label>
+                    <div className="d-flex align-items-center column-gap-1">
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={differenceToggle}
+                                onChange={handleToggle}
+                            />
+                            <span className="slider"></span>
+                        </label>
+                        <div className="label-checkbox">
+                            Show Differences
+                        </div>
+                    </div>
                     <div className="checkboxes">
                         <label>
                             <input
@@ -105,7 +110,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                             <div className='gap-div'></div>
                                                             <tr>
                                                                 <td className="corner-left" style={{ width: "30%", borderTop: 'none', borderBottom: 'none' }}>{i.country}</td>
-                                                                <td className="corner-left position-relative" style={{ width: "30%", borderTop: 'none', borderBottom: 'none', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                <td className="corner-left position-relative" style={{ width: "30%", borderTop: 'none', borderBottom: 'none', maxWidth: '150px' }}>
                                                                     {
                                                                         (() => {
                                                                             const match = i.ways_to_buy.match(/^([^\(]+)(\(.+\))?$/);
@@ -176,7 +181,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                             </tr>
                                                             {
                                                                 i.openBags && (
-                                                                    <tr key={`openBags-${index}`} style={{height: '27px'}}>
+                                                                    <tr key={`openBags-${index}`} style={{ height: '27px' }}>
                                                                         <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}></td>
                                                                         <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}></td>
                                                                         <td style={{ width: "30%", borderTop: 'none', borderBottom: '1px solid #ccc' }}>
@@ -227,7 +232,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                         }
                                                                         {
                                                                             differenceToggle && aos && gbi &&
-                                                                            <div className='right-th fixed-height-header col-3'> GBI - AOS</div>
+                                                                            <div className='right-th fixed-height-header col-3' style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}> GBI - AOS</div>
                                                                         }
                                                                         {
                                                                             aos &&
@@ -235,7 +240,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                         }
                                                                         {
                                                                             differenceToggle && aos && fsi &&
-                                                                            <div className='right-th fixed-height-header col-3'> AOS - FSI</div>
+                                                                            <div className='right-th fixed-height-header col-3' style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}> AOS - FSI</div>
                                                                         }
                                                                         {
                                                                             fsi &&
@@ -243,7 +248,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                                         }
                                                                         {
                                                                             differenceToggle && gbi && fsi &&
-                                                                            <div className='right-th fixed-height-header col-3'> GBI - FSI</div>
+                                                                            <div className='right-th fixed-height-header col-3' style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}> GBI - FSI</div>
                                                                         }
                                                                     </th>
                                                                 </tr>

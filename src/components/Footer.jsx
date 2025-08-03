@@ -1,18 +1,23 @@
 import { useState } from 'react'
-import { useEffect } from 'react';
-import { FaDownload, FaFileExcel, FaFilePdf } from 'react-icons/fa';
+import { useEffect, useRef } from 'react';
+import { MdRefresh, MdOutlineFileDownload } from "react-icons/md";
 import { exportToExcel, exportToSummaryExcel } from '../utils/Functions';
 import axios from 'axios';
 // import ServiceCallsUtil from '../util/ServiceCallsUtil';
 
-function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates, dynamicHeaderMap }) {
+function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates, dynamicHeaderMap, fetchRowData, setApiStatus, showModal, apiStatus }) {
     const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
+    const modalRef = useRef(null);
 
     const calculateTimeAgo = (timestamp) => {
         if (!timestamp) return '';
 
-        const [datePart, timePart] = timestamp.split(' ');
+        let parts = timestamp.split(' ');
+        if (parts.length === 3) {
+            parts.shift();
+        }
+        const [datePart, timePart] = parts;
         const [day, month, year] = datePart.split('-');
 
         const monthMap = {
@@ -24,9 +29,13 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
         const monthNum = monthMap[month];
         const [hours, minutes, seconds] = timePart.split(':');
 
-        const snapshotDate = new Date(year, monthNum, day, hours, minutes, seconds);
+        const snapshotDate = new Date(Date.UTC(year, monthNum, day, hours, minutes, seconds));
+        snapshotDate.setHours(snapshotDate.getHours() + getPSTOffset());
         const currentDate = new Date();
-        const diffTime = Math.abs(currentDate - snapshotDate);
+        const pstOffset = getPSTOffset();
+        const currentDatePST = new Date(currentDate.getTime() + (pstOffset * 60 * 60 * 1000));
+
+        const diffTime = Math.abs(currentDatePST - snapshotDate);
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
@@ -40,12 +49,23 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
         }
     };
 
+    function getPSTOffset() {
+        const now = new Date();
+        const pstDate = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Los_Angeles',
+            timeZoneName: 'short'
+        }).formatToParts(now);
+
+        const tz = pstDate.find(p => p.type === 'timeZoneName')?.value;
+        return tz?.includes('PDT') ? -7 : -8;
+    }
+
     useEffect(() => {
         setLoading(true);
         let serviceCalls = [];
         serviceCalls = [{
-                	'serviceName': 'Reports_Refresh_Timestamp',
-                	'method': 'GET'
+            'serviceName': 'Reports_Refresh_Timestamp',
+            'method': 'GET'
         }];
         // ServiceCallsUtil.fireServiceCalls(serviceCalls, (responses) => {
         //             //const result = responses[0].response;
@@ -53,17 +73,43 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
         //             setData(responses[0].response[0]);
         //             setLoading(false);
         // });
-        axios.get('https://ryr9j.wiremockapi.cloud/timestamp')
+        axios.get('https://7kyd3.wiremockapi.cloud/timestamp', { timeout: 8000 })
             .then(response => {
-                setData(response.data.result[0]);
+                processData(response.data.result);
             })
             .catch(error => {
-                console.error('Error fetching data:', error);
+                let message = "Unknown error";
+
+                if (error.code === 'ECONNABORTED' || error.response) {
+                    message = "Timeout occurred while fetching timestamp";
+                } else if (error.response) {
+                    message = `Error while fetching timestamp API`;
+                } else {
+                    message = "Failed to fetch timestamp";
+                }
+
+                setApiStatus(prev => ({
+                    ...prev,
+                    timestamp: message
+                }));
+                showModal();
             })
             .finally(() => {
                 setLoading(false);
             });
     }, []);
+
+
+    const processData = (data) => {
+        if (!data.length || !data) {
+            setApiStatus(prev => ({
+                ...prev,
+                timestamp: "Empty response from timestamp API"
+            }));
+        } else {
+            setData(data[0]);
+        }
+    }
 
 
     const handleDownloadPDF = () => {
@@ -94,35 +140,59 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                     <>
                         <div className='footer-box'>
                             <p>Last Refresh Time</p>
-                            <p className="muted">{data?.Last_Refresh_Time} </p>
+                            {
+                                apiStatus && apiStatus.timestamp ?
+                                    <p className="muted">No data to show</p>
+                                    :
+                                    <p className="muted">{data?.Last_Refresh_Time} {calculateTimeAgo(data?.Last_Refresh_Time)}</p>
+                            }
                         </div>
                         <div className='footer-box'>
                             <p>AOS Last Snapshot Time</p>
-                            <p className="muted">{data?.AOS_Last_Snapshot_Time} </p>
+                            {
+                                apiStatus && apiStatus.timestamp ?
+                                    <p className="muted">No data to show</p>
+                                    :
+                                    <p className="muted">{data?.AOS_Last_Snapshot_Time} {calculateTimeAgo(data?.AOS_Last_Snapshot_Time)}</p>
+                            }
                         </div>
                         <div className='footer-box'>
                             <p>GBI Last Snapshot Time</p>
-                            <p className="muted">{data?.GBI_Last_Snapshot_Time} </p>
+                            {
+                                apiStatus && apiStatus.timestamp ?
+                                    <p className="muted">No data to show</p>
+                                    :
+                                    <p className="muted">{data?.GBI_Last_Snapshot_Time} {calculateTimeAgo(data?.GBI_Last_Snapshot_Time)}</p>
+                            }
                         </div>
                         <div className='footer-box'>
                             <p>FSI Last Snapshot Time</p>
-                            <p className="muted">{data?.FSI_Last_Snapshot_Time} </p>
+                            {
+                                apiStatus && apiStatus.timestamp ?
+                                    <p className="muted">No data to show</p>
+                                    :
+                                    <p className="muted">{data?.FSI_Last_Snapshot_Time} {calculateTimeAgo(data?.FSI_Last_Snapshot_Time)}</p>
+                            }
                         </div>
+                        <button className="action-button" onClick={fetchRowData}>
+                            <MdRefresh size={16} className='me-1' />Refresh
+                        </button>
                         <div className='download-box dropdown'>
-                            <button className="dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <FaDownload />
+                            <button className="dropdown-toggle action-button" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <MdOutlineFileDownload size={16} className='me-1' />
+                                Download
                             </button>
-                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown">
+                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown" style={{ minWidth: '100px' }}>
                                 <li>
-                                    <a className="dropdown-item" 
+                                    <a className="dropdown-item"
                                         onClick={() => handleExcelExport()}>
-                                        <FaFileExcel size={18} /> <span>Download Excel</span>
+                                        <span>Excel</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a className="dropdown-item" 
+                                    <a className="dropdown-item"
                                         onClick={() => handleDownloadPDF()}>
-                                        <FaFilePdf size={18} /> <span>Download PDF</span>
+                                        <span>PDF</span>
                                     </a>
                                 </li>
                             </ul>

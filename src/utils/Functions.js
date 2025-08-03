@@ -37,7 +37,7 @@ export function getFilterLabel(filter, fullList) {
 }
 
 
-export function getTillDates(dateOptions) {
+export function getTillDates(dateOptions, dayDescMap) {
     const dates = [];
     const startDate = dateOptions[0].value;
     const totalDays = dateOptions.length;
@@ -45,9 +45,10 @@ export function getTillDates(dateOptions) {
     dateOptions.slice().reverse().forEach((item, index) => {
         const labelIndex = totalDays - index;
         const currentEndDate = item.value;
+        const desc = dayDescMap && dayDescMap[currentEndDate] ? dayDescMap[currentEndDate] : '';
 
         dates.push({
-            label: `Till Day - ${labelIndex} (EOD)`,
+            label: desc ? desc : `Till Day - ${labelIndex} (EOD)`,
             date: `(${startDate} - ${currentEndDate})`,
         });
     });
@@ -56,7 +57,7 @@ export function getTillDates(dateOptions) {
 }
 
 
-export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems }) => {
+export const transformBagData = ({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems, setDayDescMap }) => {
     const waysToBuy = new Set();
     const comboOrder = [];
     const seenCombos = new Set();
@@ -113,7 +114,7 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
         let statusKey = bagStatusMap[item.Bag_Status];
 
         if (!headerKey) return;
-        if (!statusKey && headerKey==='openBags'){
+        if (!statusKey && headerKey === 'openBags') {
             statusKey = 'openBags';
         }
 
@@ -181,7 +182,7 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
                 ways_to_buy: item.ways_to_buy,
                 fsi_status: item.fsi_status
             };
-                //console.log("sk dynamicBagStatuses", dynamicBagStatuses, _raw, dynamicHeaderToChildren)
+            //console.log("sk dynamicBagStatuses", dynamicBagStatuses, _raw, dynamicHeaderToChildren)
             dynamicBagStatuses.forEach(({ key }) => {
                 let directData = (_raw[key] && _raw[key][key]) || null;
 
@@ -227,18 +228,28 @@ export const transformBagData = ({ data, setFilteredData, setTotalData, setTillD
         data: comboOrder.map(combo => groupData[combo])
     }));
 
+    let dayDescMap = {};
+    data.forEach(item => {
+        const dayRange = item.Day_Range;
+        const parts = dayRange.split(" - ");
+        const date = parts[1].trim();
+        dayDescMap[date] = item.Day_Desc;
+    });
+
+    setDayDescMap(dayDescMap);
     setFilteredData(finalResult);
     setDynamicHeaderMap(dynamicHeaderToChildren);
-    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions, appliedItems });
+    pushTillDateOptions({ dates: Object.keys(dateGroups), setTillDateOptions, dayDescMap });
     calculateTotals({ data: finalResult, setTotalData, setSummaryWTB, dynamicHeaderMap: dynamicHeaderToChildren });
 };
 
-const pushTillDateOptions = ({ dates, setTillDateOptions, appliedItems }) => {
+const pushTillDateOptions = ({ dates, setTillDateOptions, dayDescMap }) => {
     const options = [];
     dates.forEach((date, index) => {
         options.push({
             value: date,
-            date: date
+            date: date,
+            description: dayDescMap[date] || ''
         });
     });
     setTillDateOptions(options);
@@ -387,7 +398,7 @@ export const exportToExcel = async ({
         if (aosEnabled) spans.push("AOS");
         if (showDiff && aosEnabled && fsiEnabled) spans.push("AOS - FSI");
         if (fsiEnabled) spans.push("FSI");
-         if (showDiff && gbiEnabled && fsiEnabled) spans.push("GBI - FSI");
+        if (showDiff && gbiEnabled && fsiEnabled) spans.push("GBI - FSI");
         headerRow1.push(`Till Day ${labelIndex} EOD`);
         for (let i = 1; i < spans.length; i++) headerRow1.push(null);
 
@@ -509,7 +520,7 @@ export const exportToExcel = async ({
             }
 
             children.forEach(childKey => {
-                if(childKey==='openBags') return;
+                if (childKey === 'openBags') return;
                 let hasData = false;
                 for (const date of dates) {
                     const s = dateData[date]?.[childKey];
