@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTillDates } from "../utils/Functions";
 
-function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppliedItems, dayDescMap }) {
+function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppliedItems, dayDescMap, isTabChangeRef }) {
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -57,17 +57,28 @@ function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppl
             let tillAppliedDates = [];
 
 
-            if (appliedItems && appliedItems.length) {
+            if (appliedItems && appliedItems.length && isTabChangeRef.current) {
                 appliedDates = processedOptions.filter(option => appliedItems.includes(option.date)).map(option => option.date);
                 tillAppliedDates = processedOptions.filter(option => appliedItems.includes(option.date));
             } else {
-                appliedDates = processedOptions.map(option => option.date);
-                tillAppliedDates = processedOptions;
+                if (isTabChangeRef.current) {
+                    if (appliedItems && appliedItems.length) {
+                        appliedDates = processedOptions.filter(option => appliedItems.includes(option.date)).map(option => option.date);
+                        tillAppliedDates = processedOptions.filter(option => appliedItems.includes(option.date));
+                    } else {
+                        appliedDates = processedOptions.map(option => option.date);
+                        tillAppliedDates = processedOptions;
+                    }
+                } else {
+                    appliedDates = processedOptions.map(option => option.date);
+                    tillAppliedDates = processedOptions;
+                }
             }
 
+            if (isTabChangeRef.current) isTabChangeRef.current = false;
             setAppliedItems(appliedDates);
-            setSelectedItems(appliedDates);
             setTillDates(tillAppliedDates);
+            setSelectedItems(appliedDates);
         }
     }, [tillDateOptions]);
 

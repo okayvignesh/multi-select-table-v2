@@ -36,6 +36,9 @@ function ReconReportsTable() {
   const [apiStatus, setApiStatus] = useState({});
   const [latestDate, setLatestDate] = useState(null);
   const modalRef = useRef(null);
+  const isTabChangeRef = useRef(false);
+  const isResetRef = useRef(false);
+
 
   const fetchRowData = () => {
 
@@ -59,7 +62,7 @@ function ReconReportsTable() {
       'serviceName': activeTab !== "summary" ? 'Reports_Detail_Row_Level_Data' : 'Reports_Summary_Data',
       'method': 'POST',
       'serviceRequest': {
-        'Country': appliedFilters.filter1,
+        'Country': filter1,
         'Ways To Buy': filter3,
         'As Of': [appliedFilters.filter2]
       }
@@ -114,11 +117,17 @@ function ReconReportsTable() {
 
 
   useEffect(() => {
+    isTabChangeRef.current = true;
     fetchRowData();
   }, [activeTab])
 
 
   useEffect(() => {
+    if (isResetRef.current) {
+      isResetRef.current = false;
+      return;
+    }
+
     fetchRowData();
   }, [appliedFilters.filter2])
 
@@ -128,10 +137,11 @@ function ReconReportsTable() {
         <Header dateOptions={dateOptions} setDateOptions={setDateOptions}
           appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters}
           countries={countries} setCountries={setCountries}
+          isResetRef={isResetRef}
           waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
           fetchRowData={fetchRowData} setLatestDate={setLatestDate}
         />
-        <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} appliedItems={appliedItems} setAppliedItems={setAppliedItems} dayDescMap={dayDescMap} />
+        <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} appliedItems={appliedItems} setAppliedItems={setAppliedItems} dayDescMap={dayDescMap} isTabChangeRef={isTabChangeRef} />
       </div>
       <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi} apiStatus={apiStatus}
         appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} dynamicHeaderMap={dynamicHeaderMap} />

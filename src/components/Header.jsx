@@ -8,7 +8,7 @@ import CalendarComponent from './Calendar';
 
 // import Constants from '../util/Constants';
 
-function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData, setLatestDate }) {
+function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData, setLatestDate, isResetRef }) {
   const [loading, setLoading] = useState(false);
   const [filter1, setFilter1] = useState([]);
   const [filter3, setFilter3] = useState([]);
@@ -76,6 +76,7 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
   };
 
   const handleReset = () => {
+    isResetRef.current = true;
     setFilter1(countries.map((i) => i.id));
     setFilter3(waysToBuy.map((i) => i.id));
     setFilter2(dateOptions.reduce((max, curr) =>

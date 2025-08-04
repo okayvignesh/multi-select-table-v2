@@ -362,7 +362,6 @@ export const exportToExcel = async ({
     const aosEnabled = aos;
     const fsiEnabled = fsi;
 
-
     const toTitleCase = (camelCase) => {
         return camelCase
             .replace(/([A-Z])/g, ' $1')
@@ -394,16 +393,22 @@ export const exportToExcel = async ({
     const headerRow1 = [" ", " ", " "];
     const headerRow3 = ["Country", "Ways to Buy", "Bag Status"];
 
-    dates.forEach((_, index) => {
-        const labelIndex = dates.length - index;
+    dates.forEach((date, index) => {
+        const tillDateObj = tillDates.find(obj => {
+            const secondDate = obj.date.split('-')[1].replace(')', '').trim();
+            return secondDate === date;
+        });
+        const headerLabel = tillDateObj && tillDateObj.label ? tillDateObj.label : `Till Day ${dates.length - index} EOD`;
+
         const spans = [];
         if (gbiEnabled) spans.push("GBI");
-        if (showDiff && aosEnabled && gbiEnabled) spans.push("GBI - AOS");
+        if (showDiff && aosEnabled && gbiEnabled) spans.push("AOS - GBI");
         if (aosEnabled) spans.push("AOS");
         if (showDiff && aosEnabled && fsiEnabled) spans.push("AOS - FSI");
         if (fsiEnabled) spans.push("FSI");
         if (showDiff && gbiEnabled && fsiEnabled) spans.push("GBI - FSI");
-        headerRow1.push(`Till Day ${labelIndex} EOD`);
+
+        headerRow1.push(headerLabel);
         for (let i = 1; i < spans.length; i++) headerRow1.push(null);
 
         spans.forEach(colName => headerRow3.push(colName));
@@ -412,15 +417,15 @@ export const exportToExcel = async ({
     worksheet.addRow(headerRow1);
     worksheet.addRow(headerRow3);
 
-    // Merge header cells
     let colIndexForMerge = 4;
-    dates.forEach(() => {
-        const span =
-            (gbiEnabled ? 1 : 0) +
-            ((showDiff && aosEnabled && gbiEnabled) ? 1 : 0) +
-            (aosEnabled ? 1 : 0) +
-            ((showDiff && aosEnabled && fsiEnabled) ? 1 : 0) +
-            (fsiEnabled ? 1 : 0);
+    dates.forEach((_, index) => {
+        let span = 0;
+        if (gbiEnabled) span++;
+        if (showDiff && aosEnabled && gbiEnabled) span++;
+        if (aosEnabled) span++;
+        if (showDiff && aosEnabled && fsiEnabled) span++;
+        if (fsiEnabled) span++;
+        if (showDiff && gbiEnabled && fsiEnabled) span++;
 
         if (span > 0) {
             worksheet.mergeCells(1, colIndexForMerge, 1, colIndexForMerge + span - 1);
@@ -494,7 +499,7 @@ export const exportToExcel = async ({
 
                     if (gbiEnabled) row.push(safeValue(gbi));
                     if (showDiff && aosEnabled && gbiEnabled) {
-                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? gbi - aos : "-";
+                        const diffAosGbi = (typeof aos === "number" && typeof gbi === "number") ? aos - gbi : "-";
                         row.push(safeValue(diffAosGbi));
                     }
                     if (aosEnabled) row.push(safeValue(aos));
@@ -504,7 +509,7 @@ export const exportToExcel = async ({
                     }
                     if (fsiEnabled) row.push(safeValue(fsi));
                     if (showDiff && gbiEnabled && fsiEnabled) {
-                        const diffGbiFsi = (typeof aos === "number" && typeof fsi === "number") ? gbi - fsi : "-";
+                        const diffGbiFsi = (typeof gbi === "number" && typeof fsi === "number") ? gbi - fsi : "-";
                         row.push(safeValue(diffGbiFsi));
                     }
                 });
@@ -555,6 +560,10 @@ export const exportToExcel = async ({
                         row.push(safeValue(diffAosFsi));
                     }
                     if (fsiEnabled) row.push(safeValue(fsi));
+                    if (showDiff && gbiEnabled && fsiEnabled) {
+                        const diffGbiFsi = (typeof gbi === "number" && typeof fsi === "number") ? gbi - fsi : "-";
+                        row.push(safeValue(diffGbiFsi));
+                    }
                 });
 
                 const newRow = worksheet.addRow(row);
@@ -594,7 +603,6 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
         }))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Detailed Excel Report");
 
@@ -607,20 +615,33 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
         return isNaN(parsed) ? "-" : parsed;
     };
 
-    const dates = [...new Set(filteredExportData.map(entry => entry.date))]
-        .sort((a, b) => new Date(b) - new Date(a));
+    const dates = tillDates
+        .map(obj => {
+            const secondDate = obj.date.split('-')[1].replace(')', '').trim();
+            return filteredExportData.find(entry => entry.date === secondDate) ? secondDate : null;
+        })
+        .filter(Boolean);
+
+    const getLabelForDate = (date) => {
+        const obj = tillDates.find(obj => {
+            const secondDate = obj.date.split('-')[1].replace(')', '').trim();
+            return secondDate === date;
+        });
+        return obj && obj.label ? obj.label : date;
+    };
 
     const createHeaderRows = (startRowIdx) => {
         const headerRow1 = [" "];
-        dates.forEach((_, index) => {
-            const labelIndex = dates.length - index;
-            headerRow1.push(`Till Day ${labelIndex} EOD`);
+        dates.forEach((date, index) => {
+            const headerLabel = getLabelForDate(date);
+            headerRow1.push(headerLabel);
             const extraCells =
                 gbiEnabled +
                 (showDiff && aosEnabled && gbiEnabled) +
                 aosEnabled +
                 (showDiff && aosEnabled && fsiEnabled) +
-                fsiEnabled - 1;
+                fsiEnabled +
+                (showDiff && gbiEnabled && fsiEnabled) - 1;
             for (let i = 0; i < extraCells; i++) {
                 headerRow1.push(null);
             }
@@ -633,6 +654,7 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
             if (aosEnabled) headerRow3.push("AOS");
             if (showDiff && aosEnabled && fsiEnabled) headerRow3.push("AOS - FSI");
             if (fsiEnabled) headerRow3.push("FSI");
+            if (showDiff && gbiEnabled && fsiEnabled) headerRow3.push("GBI - FSI");
         });
 
         worksheet.insertRow(startRowIdx, headerRow1);
@@ -644,7 +666,7 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
                 cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF" } };
             } else {
                 cell.font = { bold: true, color: { argb: "FFFFFF" } };
-                cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "0070C0" } };
+                cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "283b51" } };
             }
             cell.alignment = { horizontal: "center", vertical: "middle" };
         });
@@ -662,7 +684,8 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
                 (showDiff && aosEnabled && gbiEnabled) +
                 aosEnabled +
                 (showDiff && aosEnabled && fsiEnabled) +
-                fsiEnabled;
+                fsiEnabled +
+                (showDiff && gbiEnabled && fsiEnabled)
             worksheet.mergeCells(startRowIdx, colIndexForMerge, startRowIdx, colIndexForMerge + span - 1);
             colIndexForMerge += span;
         });
@@ -703,6 +726,10 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
                     row.push(safeValue(diffAosFsi));
                 }
                 if (fsiEnabled) row.push(safeValue(fsi));
+                if (showDiff && gbiEnabled && fsiEnabled) {
+                    const diffGbiFsi = (typeof gbi === "number" && typeof fsi === "number") ? gbi - fsi : "-";
+                    row.push(safeValue(diffGbiFsi));
+                }
             });
 
             const newRow = worksheet.insertRow(startRowIdx++, row);
@@ -729,7 +756,6 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
         return startRowIdx + 2;
     };
 
-
     const clearedWTB = summaryWTB && summaryWTB.length ? summaryWTB.map(text => text.replace(/\s*\(.*?\)/g, '')).join(', ') : '';
     let totalCols =
         1 + dates.length * (
@@ -737,7 +763,8 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
             (showDiff && aosEnabled && gbiEnabled) +
             aosEnabled +
             (showDiff && aosEnabled && fsiEnabled) +
-            fsiEnabled
+            fsiEnabled +
+            (showDiff && gbiEnabled && fsiEnabled)
         );
 
     let nextRow = 1;
@@ -745,12 +772,10 @@ export const exportToSummaryExcel = async ({ filteredData, totalData, showDiff, 
     nextRow = createHeaderRows(nextRow);
     nextRow = addDataRows(totalData["selective"], nextRow);
 
-
     nextRow += 3;
     nextRow = addSectionHeading("Ways to Buy (All ways to buy)", nextRow, totalCols);
     nextRow = createHeaderRows(nextRow);
     nextRow = addDataRows(totalData["all"], nextRow);
-
 
     worksheet.columns.forEach((column, index) => {
         column.width = index === 0 ? 20 : 15;
