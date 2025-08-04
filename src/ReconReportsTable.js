@@ -34,17 +34,24 @@ function ReconReportsTable() {
   });
   const [dayDescMap, setDayDescMap] = useState({});
   const [apiStatus, setApiStatus] = useState({});
+  const [latestDate, setLatestDate] = useState(null);
   const modalRef = useRef(null);
 
   const fetchRowData = () => {
 
-
+    if (!latestDate) return;
     //console.log("sk filters", appliedFilters, activeTab,Constants.REPORT_PAGE_AS_OF_DATE, dateOptions );
     setLoading(true)
     let filter3 = [];
+    let filter1 = [];
+
     if (appliedFilters.filter3.length == waysToBuy.length) {
       filter3 = ['ALL']
     } else filter3 = appliedFilters.filter3;
+
+    if (appliedFilters.filter1.length == waysToBuy.length) {
+      filter1 = ['ALL']
+    } else filter1 = appliedFilters.filter1;
     // GET REQUEST FOR CHECKING 
 
     let serviceCalls = [];
@@ -122,7 +129,7 @@ function ReconReportsTable() {
           appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters}
           countries={countries} setCountries={setCountries}
           waysToBuy={waysToBuy} setWaysToBuy={setWaysToBuy}
-          fetchRowData={fetchRowData}
+          fetchRowData={fetchRowData} setLatestDate={setLatestDate}
         />
         <SecondaryHeader activeTab={activeTab} setActiveTab={setActiveTab} tillDateOptions={tillDateOptions} tillDates={tillDates} setTillDates={setTillDates} appliedItems={appliedItems} setAppliedItems={setAppliedItems} dayDescMap={dayDescMap} />
       </div>

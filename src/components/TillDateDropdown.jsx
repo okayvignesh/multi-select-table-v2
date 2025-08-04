@@ -89,7 +89,6 @@ function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppl
         };
     }, [isOpen]);
 
-    console.log(tillDateOptions)
 
     return (
         <div className="dropdown tilldate-dp" ref={dropdownRef}>
@@ -105,7 +104,7 @@ function TillDateDropdown({ tillDateOptions, setTillDates, appliedItems, setAppl
 
             {options.length > 0 && (
                 <div className={`dropdown-menu custom-end ${isOpen ? 'show' : ''}`}>
-                    <div style={{ height: "400px", overflowY: 'scroll' }}>
+                    <div style={{ maxHeight: "400px", overflowY: 'scroll', height: 'fit-content' }}>
                         <button className='select-all' onClick={toggleSelect}>{selectedItems.length === options.length ? 'Deselect' : 'Select'} All</button>
                         {options.map(option => (
                             <div key={option.date} className="dropdown-item">

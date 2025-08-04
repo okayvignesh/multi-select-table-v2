@@ -8,7 +8,7 @@ import CalendarComponent from './Calendar';
 
 // import Constants from '../util/Constants';
 
-function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData }) {
+function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters, countries, setCountries, waysToBuy, setWaysToBuy, fetchRowData, setLatestDate }) {
   const [loading, setLoading] = useState(false);
   const [filter1, setFilter1] = useState([]);
   const [filter3, setFilter3] = useState([]);
@@ -36,7 +36,7 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
     //                 setLoading(false);
     // });
     axios.get('https://7kyd3.wiremockapi.cloud/geo')
-      .then(response => extractData(response.data.result, setCountries, setWaysToBuy, setDateOptions))
+      .then(response => extractData(response.data.result, setCountries, setWaysToBuy, setDateOptions, setLatestDate))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -66,11 +66,6 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
       filter3: waysToBuy.map((i) => i.id),
     }));
   }, [countries, waysToBuy]);
-
-
-  const handleAsofDateChange = (date) => {
-    setFilter2(date.label);
-  };
 
   const handleApply = () => {
     setAppliedFilters({ filter1, filter2, filter3 });

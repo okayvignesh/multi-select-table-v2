@@ -10,56 +10,6 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
     const [loading, setLoading] = useState(false);
     const modalRef = useRef(null);
 
-    const calculateTimeAgo = (timestamp) => {
-        if (!timestamp) return '';
-
-        let parts = timestamp.split(' ');
-        if (parts.length === 3) {
-            parts.shift();
-        }
-        const [datePart, timePart] = parts;
-        const [day, month, year] = datePart.split('-');
-
-        const monthMap = {
-            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-            'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11,
-            'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6
-        };
-
-        const monthNum = monthMap[month];
-        const [hours, minutes, seconds] = timePart.split(':');
-
-        const snapshotDate = new Date(Date.UTC(year, monthNum, day, hours, minutes, seconds));
-        snapshotDate.setHours(snapshotDate.getHours() + getPSTOffset());
-        const currentDate = new Date();
-        const pstOffset = getPSTOffset();
-        const currentDatePST = new Date(currentDate.getTime() + (pstOffset * 60 * 60 * 1000));
-
-        const diffTime = Math.abs(currentDatePST - snapshotDate);
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (diffDays > 0) {
-            return `(${diffDays} days ago)`;
-        } else if (diffHours > 0) {
-            return `(${diffHours} hours ago)`;
-        } else {
-            return `(${diffMinutes} minutes ago)`;
-        }
-    };
-
-    function getPSTOffset() {
-        const now = new Date();
-        const pstDate = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/Los_Angeles',
-            timeZoneName: 'short'
-        }).formatToParts(now);
-
-        const tz = pstDate.find(p => p.type === 'timeZoneName')?.value;
-        return tz?.includes('PDT') ? -7 : -8;
-    }
-
     useEffect(() => {
         setLoading(true);
         let serviceCalls = [];
@@ -132,6 +82,42 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
         }
     }
 
+    function getTimeDifferenceFromPST(pstTimestampStr) {
+        if (!pstTimestampStr) return '';
+        const [day, mon, yearAndTime] = pstTimestampStr.split('-');
+        const [year, timeStr] = yearAndTime.split(' ');
+        const [hour, min, sec] = timeStr.split(':').map(Number);
+
+        const monthMap = {
+            Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+            Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+        };
+
+        const month = monthMap[mon];
+
+        const assumedPSTDate_UTC = new Date(Date.UTC(year, month, day, hour, min, sec));
+
+        const assumedPSTDate = new Date(assumedPSTDate_UTC.getTime() + 7 * 60 * 60 * 1000);
+
+        const nowPSTStr = new Date().toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles"
+        });
+        const nowPST = new Date(nowPSTStr);
+
+        const diffMs = nowPST - assumedPSTDate;
+        const absDiffMs = Math.abs(diffMs);
+        const minutes = Math.floor(absDiffMs / (1000 * 60));
+        const hours = Math.floor(absDiffMs / (1000 * 60 * 60));
+        const days = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
+
+        const suffix = diffMs >= 0 ? "ago" : "from now";
+
+        if (days >= 1) return `${days} day(s) ${suffix}`;
+        if (hours >= 1) return `${hours} hour(s) ${suffix}`;
+        return `${minutes} minute(s) ${suffix}`;
+    }
+
+
     return (
         <footer className="footer">
             {
@@ -144,7 +130,7 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                                 apiStatus && apiStatus.timestamp ?
                                     <p className="muted">No data to show</p>
                                     :
-                                    <p className="muted">{data?.Last_Refresh_Time} {calculateTimeAgo(data?.Last_Refresh_Time)}</p>
+                                    <p className="muted">{data?.Last_Refresh_Time} {getTimeDifferenceFromPST(data?.Last_Refresh_Time)}</p>
                             }
                         </div>
                         <div className='footer-box'>
@@ -153,7 +139,7 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                                 apiStatus && apiStatus.timestamp ?
                                     <p className="muted">No data to show</p>
                                     :
-                                    <p className="muted">{data?.AOS_Last_Snapshot_Time} {calculateTimeAgo(data?.AOS_Last_Snapshot_Time)}</p>
+                                    <p className="muted">{data?.AOS_Last_Snapshot_Time} {getTimeDifferenceFromPST(data?.AOS_Last_Snapshot_Time)}</p>
                             }
                         </div>
                         <div className='footer-box'>
@@ -162,7 +148,7 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                                 apiStatus && apiStatus.timestamp ?
                                     <p className="muted">No data to show</p>
                                     :
-                                    <p className="muted">{data?.GBI_Last_Snapshot_Time} {calculateTimeAgo(data?.GBI_Last_Snapshot_Time)}</p>
+                                    <p className="muted">{data?.GBI_Last_Snapshot_Time} {getTimeDifferenceFromPST(data?.GBI_Last_Snapshot_Time)}</p>
                             }
                         </div>
                         <div className='footer-box'>
@@ -171,7 +157,7 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                                 apiStatus && apiStatus.timestamp ?
                                     <p className="muted">No data to show</p>
                                     :
-                                    <p className="muted">{data?.FSI_Last_Snapshot_Time} {calculateTimeAgo(data?.FSI_Last_Snapshot_Time)}</p>
+                                    <p className="muted">{data?.FSI_Last_Snapshot_Time} {getTimeDifferenceFromPST(data?.FSI_Last_Snapshot_Time)}</p>
                             }
                         </div>
                         <button className="action-button" onClick={fetchRowData}>

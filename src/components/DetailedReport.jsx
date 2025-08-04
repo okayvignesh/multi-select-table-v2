@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoIosArrowDown } from "react-icons/io";
 
@@ -8,6 +8,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
     const leftRef = useRef(null);
     const rightRef = useRef(null);
     const isSyncing = useRef(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const toTitleCase = (camelCase) => {
         return camelCase
@@ -29,9 +30,36 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
         if (isSyncing.current) return;
         isSyncing.current = true;
         target.scrollTop = source.scrollTop;
+        setIsScrolled(source.scrollTop > 0);
         isSyncing.current = false;
     };
 
+    const [colWidth, setColWidth] = useState(0);
+    const colRef = useRef(null);
+
+    useEffect(() => {
+        const updateWidth = () => {
+            if (colRef.current) {
+                setColWidth(colRef.current.clientWidth);
+            }
+        };
+
+        const observer = new ResizeObserver(() => {
+            updateWidth();
+        });
+
+        if (colRef.current) {
+            observer.observe(colRef.current);
+            updateWidth();
+        }
+
+        window.addEventListener('resize', updateWidth);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', updateWidth);
+        };
+    }, []);
 
     return (
         <div className="all-ways">
@@ -39,6 +67,9 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                 <p className="title">Ways to Buy &nbsp;<span>(All Ways to Buy)</span></p>
                 <div className="quick-filter">
                     <div className="d-flex align-items-center column-gap-1">
+                        <div className="label-checkbox">
+                            Show Differences
+                        </div>
                         <label className="toggle-switch">
                             <input
                                 type="checkbox"
@@ -47,9 +78,6 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                             />
                             <span className="slider"></span>
                         </label>
-                        <div className="label-checkbox">
-                            Show Differences
-                        </div>
                     </div>
                     <div className="checkboxes">
                         <label>
@@ -91,7 +119,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                 <div className="col-5 left-parent" ref={leftRef} onScroll={() =>
                                     handleScroll(leftRef.current, rightRef.current)
                                 }>
-                                    <div className="empty-row"></div>
+                                    <div className="empty-row" style={{ borderBottom: isScrolled ? '1px solid #ccc' : 'none' }}></div>
                                     <table className="table left-table mb-0">
                                         <thead>
                                             <tr>
@@ -213,14 +241,21 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                                 });
 
                                                 return (
-                                                    <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date}>
+                                                    <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date} ref={colRef}>
                                                         <table className="table">
                                                             <thead>
                                                                 <tr className="till-day-class">
                                                                     <th style={{ width: "30%" }}>
                                                                         <div className="d-flex px-2">
-                                                                            <p>{tillDateObj?.label || ''}</p>
-                                                                            {/* <span>{formatDate(new Date(dateOptions[dateOptions.length - 1]['value']))} - {i.date}</span> */}
+                                                                            <p className='tillday-elipsses'>
+                                                                                <span style={{ textAlign: 'start' }}>{tillDateObj?.label || ''}</span>
+                                                                                <span style={{
+                                                                                    color: '#bdbfc5', textAlign: 'end', maxWidth: colWidth ? colWidth - 140 : '100%',
+                                                                                    overflow: 'hidden',
+                                                                                    textOverflow: 'ellipsis',
+                                                                                    whiteSpace: 'nowrap'
+                                                                                }}>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
+                                                                            </p>
                                                                         </div>
                                                                     </th>
                                                                 </tr>

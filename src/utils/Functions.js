@@ -13,7 +13,7 @@ export function formatDate(d) {
 }
 
 
-export const extractData = (data, setCountries, setWaysToBuy, setDateOptions) => {
+export const extractData = (data, setCountries, setWaysToBuy, setDateOptions, setLatestDate) => {
     const countries = new Set();
     const waysToBuy = new Set();
     const dateOptions = new Set()
@@ -27,6 +27,10 @@ export const extractData = (data, setCountries, setWaysToBuy, setDateOptions) =>
     setCountries([...countries].map(item => JSON.parse(item)));
     setWaysToBuy([...waysToBuy].map(item => JSON.parse(item)));
     setDateOptions([...dateOptions].map(item => JSON.parse(item)));
+    setLatestDate([...dateOptions]
+        .map(item => JSON.parse(item))
+        .reduce((max, curr) => new Date(curr.value) > new Date(max.value) ? curr : max)
+        .label)
 }
 
 

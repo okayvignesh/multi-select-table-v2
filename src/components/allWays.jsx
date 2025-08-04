@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { IoIosArrowDown, IoIosArrowForward } from 'react-icons/io';
 
 function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summaryWTB, aos, fsi, gbi, differenceToggle, dynamicHeaderMap, handleCheckboxChange, handleToggle, appliedFilters }) {
@@ -16,6 +16,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
     const orderedBagStatusKeys = [];
     const seen = new Set();
     const childToParentMap = {};
+    const colRef = useRef(null);
 
 
     const finalKeys = Object.fromEntries(
@@ -73,6 +74,34 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
     const filteredChildToParentMap = Object.fromEntries(
         Object.entries(childToParentMap).filter(([key]) => !parentKeys.has(key))
     );
+
+    const [colWidth, setColWidth] = useState(0);
+
+    useEffect(() => {
+        const updateWidth = () => {
+            if (colRef.current) {
+                setColWidth(colRef.current.clientWidth);
+            }
+        };
+
+        const observer = new ResizeObserver(() => {
+            updateWidth();
+        });
+
+        if (colRef.current) {
+            observer.observe(colRef.current);
+            updateWidth();
+        }
+
+        window.addEventListener('resize', updateWidth);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', updateWidth);
+        };
+    }, []);
+
+
     return (
         <div className="all-ways">
             <div className="d-flex justify-content-between">
@@ -91,6 +120,9 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                         <div className="quick-filter">
                             <div className="d-flex align-items-center" style={{ background: '#fbfbfd', gap: '20px' }}>
                                 <div className='d-flex align-items-center column-gap-1'>
+                                    <div className="label-checkbox">
+                                        Show Differences
+                                    </div>
                                     <label className="toggle-switch">
                                         <input
                                             type="checkbox"
@@ -99,9 +131,6 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                         />
                                         <span className="slider"></span>
                                     </label>
-                                    <div className="label-checkbox">
-                                        Show Differences
-                                    </div>
                                 </div>
                                 <div className="checkboxes">
                                     <label>
@@ -212,28 +241,32 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                                 });
 
                                                 return (
-                                                    <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date}>
+                                                    <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date} ref={colRef}>
                                                         <table className="table">
                                                             <thead>
                                                                 <tr className="till-day-class">
                                                                     <th style={{ width: "30%" }}>
                                                                         <div className="d-flex px-2">
                                                                             <p className='tillday-elipsses'>
-                                                                                <span>{tillDateObj?.label || ''}</span>
-                                                                                <span style={{color: '#bdbfc5'}}>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
+                                                                                <span style={{ textAlign: 'start' }}>{tillDateObj?.label || ''}</span>
+                                                                                <span style={{
+                                                                                    color: '#bdbfc5', textAlign: 'end', maxWidth: colWidth ? colWidth - 150 : '100%',
+                                                                                    overflow: 'hidden',
+                                                                                    textOverflow: 'ellipsis',
+                                                                                    whiteSpace: 'nowrap'
+                                                                                }} >{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
                                                                             </p>
-                                                                            {/* <p className='date-elipsses'>{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</p> */}
                                                                         </div>
                                                                     </th>
                                                                 </tr>
                                                                 <tr className='blue'>
                                                                     <th className='right-parent-th fixed-height-header'>
                                                                         {gbi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>}
-                                                                        {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> GBI - AOS</div>}
+                                                                        {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - AOS</div>}
                                                                         {aos && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>}
-                                                                        {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> AOS - FSI</div>}
+                                                                        {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> AOS - FSI</div>}
                                                                         {fsi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>}
-                                                                        {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3' style={{overflow:'hidden', whiteSpace: 'nowrap'}}> GBI - FSI</div>}
+                                                                        {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - FSI</div>}
                                                                     </th>
                                                                 </tr>
                                                             </thead>
