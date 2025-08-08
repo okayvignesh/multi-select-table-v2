@@ -233,114 +233,141 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                      </div>
                                  )}
 
-                                    <div className="col-10 right-table" style={{ height: 'fit-content' }}>
-                                     {
-                                         !allFlag && (!totalData.selective || Object.keys(totalData.selective).length === 0) ? (
-                                             <div className="d-flex justify-content-center align-items-center " style={{ height: '200px', width: '100%', textAlign: 'center', marginLeft: '20%' }}>
-                                                 <div className="text-center" style={{ width: '100%' }}>
-                                                     <h5 style={{ color: '#666', marginBottom: '5px', textAlign: 'center' }}>No Data Found</h5>
-                                                     <p style={{ color: '#999', fontSize: '14px', textAlign: 'center' }}>There are no records available for the selected criteria.</p>
-                                                 </div>
-                                             </div>
-                                         ) : (
-                                                filteredData && filteredData
-                                                 .filter(i => tillDates.some(obj => {
-                                                     const secondDate = obj.date.split('-')[1].replace(')', '').trim();
-                                                     return secondDate === i.date;
-                                                 }))
-                                                 .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                                 .filter((i) => {
-                                                     const dateData = allFlag ? totalData.all[i.date] : totalData.selective[i.date];
-                                                     return dateData && Object.keys(dateData).length > 0;
-                                                 })
-                                                 .map((i) => {
-                                                     const tillDateObj = tillDates.find(obj => {
-                                                         const secondDate = obj.date.split('-')[1].replace(')', '').trim();
-                                                         return secondDate === i.date;
-                                                     });
+                                <div className="col-10 right-table" style={{ height: 'fit-content' }}>
+                                    {
+                                        !allFlag && (!totalData.selective || Object.keys(totalData.selective).length === 0) ? (
+                                            <div className="d-flex justify-content-center align-items-center " style={{ height: '200px', width: '100%', textAlign: 'center', marginLeft: '20%' }}>
+                                                <div className="text-center" style={{ width: '100%' }}>
+                                                    <h5 style={{ color: '#666', marginBottom: '5px', textAlign: 'center' }}>No Data Found</h5>
+                                                    <p style={{ color: '#999', fontSize: '14px', textAlign: 'center' }}>There are no records available for the selected criteria.</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            filteredData && filteredData
+                                                .filter(i => tillDates.some(obj => {
+                                                    const secondDate = obj.date.split('-')[1].replace(')', '').trim();
+                                                    return secondDate === i.date;
+                                                }))
+                                                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                                .map((i) => {
+                                                    const tillDateObj = tillDates.find(obj => {
+                                                        const secondDate = obj.date.split('-')[1].replace(')', '').trim();
+                                                        return secondDate === i.date;
+                                                    });
 
-                                                     const dateData = allFlag ? totalData.all[i.date] : totalData.selective[i.date];
-                                                     
-                                                     return (
-                                                                                                                  <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date} ref={colRef}>
-                                                             <table className="table">
-                                                                 <thead>
-                                                                     <tr className="till-day-class">
-                                                                         <th style={{ width: "30%" }}>
-                                                                             <div className="d-flex px-2">
-                                                                                 <p className='tillday-elipsses'>
-                                                                                     <span style={{ textAlign: 'start' }}>{tillDateObj?.label || ''}</span>
-                                                                                     <span style={{
-                                                                                         color: '#bdbfc5', textAlign: 'end', maxWidth: colWidth ? colWidth - 150 : '100%',
-                                                                                         overflow: 'hidden',
-                                                                                         textOverflow: 'ellipsis',
-                                                                                         whiteSpace: 'nowrap'
-                                                                                     }} >{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
-                                                                                 </p>
-                                                                             </div>
-                                                                         </th>
-                                                                     </tr>
-                                                                     <tr className='blue'>
-                                                                         <th className='right-parent-th fixed-height-header'>
-                                                                             {gbi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>}
-                                                                             {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - AOS</div>}
-                                                                             {aos && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>}
-                                                                             {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> AOS - FSI</div>}
-                                                                             {fsi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>}
-                                                                             {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - FSI</div>}
-                                                                         </th>
-                                                                     </tr>
-                                                                 </thead>
-                                                                 <tbody>
-                                                                     {
-                                                                         filteredData && filteredData.every(item => item.data.length >= 1) && (
-                                                                             <>
-                                                                                 <div className='gap-div'></div>
-                                                                                 <tr>
-                                                                                     {
-                                                                                         Object.keys(dateData)
-                                                                                             .filter(key => {
-                                                                                                 const parentKey = filteredChildToParentMap[key];
-                                                                                                 return !(parentKey && !expandedHeaders[parentKey]);
-                                                                                             })
-                                                                                             .map((item, keyIndex) => {
-                                                                                                 const subKeys = dateData[item];
-                                                                                                 const safeSubtract = (a, b) => {
-                                                                                                     const numA = Number(a);
-                                                                                                     const numB = Number(b);
-                                                                                                     return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
-                                                                                                 };
-                                                                                                 let orderedKeys = [];
-                                                                                                 if (differenceToggle) {
-                                                                                                     if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
-                                                                                                     if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
-                                                                                                     if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
-                                                                                                     if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['fsi'], subKeys['aos']) });
-                                                                                                     if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
-                                                                                                     if (gbi && fsi) orderedKeys.push({ key: 'gbi-fsi', className: 'col-3', value: safeSubtract(subKeys['fsi'], subKeys['gbi']) });
-                                                                                                 } else {
-                                                                                                     if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
-                                                                                                     if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
-                                                                                                     if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
-                                                                                                 }
-                                                                                                 return (
-                                                                                                     <td key={keyIndex} className={`right-parent-th ${parentKeys.has(item) ? 'parent' : ''} ${item === 'openBags' ? 'open-bags-row-cell' : ''}`}>
-                                                                                                         {orderedKeys.map((item, index) => (
-                                                                                                             <div key={index} className={`right-th right-th-body ${item.className} ${allFlag && item.key.includes('fsi') ? 'fsi-cell-bgcr' : ''}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                                                                                                                 {allFlag && item.key.includes('fsi') ? '' : item.value}
-                                                                                                             </div>
-                                                                                                         ))}
-                                                                                                     </td>
-                                                                                                 );
-                                                                                             })
-                                                                                     }
-                                                                                 </tr>
-                                                                             </>
-                                                                         )
-                                                                     }
-                                                                 </tbody>
-                                                             </table>
-                                                         </div>
+                                                    const dateData = allFlag ? totalData.all[i.date] : totalData.selective[i.date];
+                                                    const hasData = dateData && Object.keys(dateData).length > 0;
+
+                                                    return (
+                                                        <div className={`${differenceToggle ? 'col-6' : 'col-4'}`} key={i.date} ref={colRef}>
+                                                            <table className="table">
+                                                                <thead>
+                                                                    <tr className="till-day-class">
+                                                                        <th style={{ width: "30%" }}>
+                                                                            <div className="d-flex px-2">
+                                                                                <p className='tillday-elipsses'>
+                                                                                    <span style={{ textAlign: 'start' }}>{tillDateObj?.label || ''}</span>
+                                                                                    <span style={{
+                                                                                        color: '#bdbfc5', textAlign: 'end', maxWidth: colWidth ? colWidth - 150 : '100%',
+                                                                                        overflow: 'hidden',
+                                                                                        textOverflow: 'ellipsis',
+                                                                                        whiteSpace: 'nowrap'
+                                                                                    }} >{(tillDateObj?.date).replace(/[{()}]/g, '') || ''}</span>
+                                                                                </p>
+                                                                            </div>
+                                                                        </th>
+                                                                    </tr>
+                                                                    <tr className='blue'>
+                                                                        <th className='right-parent-th fixed-height-header'>
+                                                                            {gbi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>GBI</div>}
+                                                                            {differenceToggle && aos && gbi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - AOS</div>}
+                                                                            {aos && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>AOS</div>}
+                                                                            {differenceToggle && aos && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> AOS - FSI</div>}
+                                                                            {fsi && <div className={`right-th fixed-height-header ${differenceToggle ? 'col-2' : 'col-4'}`}>FSI</div>}
+                                                                            {differenceToggle && gbi && fsi && <div className='right-th fixed-height-header col-3' style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}> GBI - FSI</div>}
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {
+                                                                        filteredData && filteredData.every(item => item.data.length >= 1) && (
+                                                                            <>
+                                                                                <div className='gap-div'></div>
+                                                                                <tr>
+                                                                                    {hasData ? (
+                                                                                        Object.keys(dateData)
+                                                                                            .filter(key => {
+                                                                                                const parentKey = filteredChildToParentMap[key];
+                                                                                                return !(parentKey && !expandedHeaders[parentKey]);
+                                                                                            })
+                                                                                            .map((item, keyIndex) => {
+                                                                                                const subKeys = dateData[item];
+                                                                                                const safeSubtract = (a, b) => {
+                                                                                                    const numA = Number(a);
+                                                                                                    const numB = Number(b);
+                                                                                                    return isNaN(numA) || isNaN(numB) ? '-' : numB - numA;
+                                                                                                };
+                                                                                                let orderedKeys = [];
+                                                                                                if (differenceToggle) {
+                                                                                                    if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: subKeys['gbi'] });
+                                                                                                    if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: safeSubtract(subKeys['aos'], subKeys['gbi']) });
+                                                                                                    if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: subKeys['aos'] });
+                                                                                                    if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: safeSubtract(subKeys['fsi'], subKeys['aos']) });
+                                                                                                    if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: subKeys['fsi'] });
+                                                                                                    if (gbi && fsi) orderedKeys.push({ key: 'gbi-fsi', className: 'col-3', value: safeSubtract(subKeys['fsi'], subKeys['gbi']) });
+                                                                                                } else {
+                                                                                                    if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: subKeys['gbi'] });
+                                                                                                    if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: subKeys['aos'] });
+                                                                                                    if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: subKeys['fsi'] });
+                                                                                                }
+                                                                                                return (
+                                                                                                    <td key={keyIndex} className={`right-parent-th ${parentKeys.has(item) ? 'parent' : ''} ${item === 'openBags' ? 'open-bags-row-cell' : ''}`}>
+                                                                                                        {orderedKeys.map((item, index) => (
+                                                                                                            <div key={index} className={`right-th right-th-body ${item.className} ${allFlag && item.key.includes('fsi') ? 'fsi-cell-bgcr' : ''}`} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                                                                                                {allFlag && item.key.includes('fsi') ? '' : item.value}
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </td>
+                                                                                                );
+                                                                                            })
+                                                                                    ) : (
+                                                                                        orderedBagStatusKeys
+                                                                                            .filter(({ key }) => {
+                                                                                                const parentKey = filteredChildToParentMap[key];
+                                                                                                return !(parentKey && !expandedHeaders[parentKey]);
+                                                                                            })
+                                                                                            .map(({ key }, keyIndex) => {
+                                                                                                let orderedKeys = [];
+                                                                                                if (differenceToggle) {
+                                                                                                    if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-2', value: '' });
+                                                                                                    if (gbi && aos) orderedKeys.push({ key: 'gbi-aos', className: 'col-3', value: '' });
+                                                                                                    if (aos) orderedKeys.push({ key: 'aos', className: 'col-2', value: '' });
+                                                                                                    if (aos && fsi) orderedKeys.push({ key: 'aos-fsi', className: 'col-3', value: '' });
+                                                                                                    if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-2', value: '' });
+                                                                                                    if (gbi && fsi) orderedKeys.push({ key: 'gbi-fsi', className: 'col-3', value: '' });
+                                                                                                } else {
+                                                                                                    if (gbi) orderedKeys.push({ key: 'gbi', className: 'col-4', value: '' });
+                                                                                                    if (aos) orderedKeys.push({ key: 'aos', className: 'col-4', value: '' });
+                                                                                                    if (fsi) orderedKeys.push({ key: 'fsi', className: 'col-4', value: '' });
+                                                                                                }
+                                                                                                return (
+                                                                                                    <td key={keyIndex} className={`right-parent-th ${parentKeys.has(key) ? 'parent' : ''} ${key === 'openBags' ? 'open-bags-row-cell' : ''}`}>
+                                                                                                        {orderedKeys.map((item, index) => (
+                                                                                                            <div key={index} className={`right-th right-th-body ${item.className} fsi-cell-bgcr`} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                                                                                                {item.value}
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </td>
+                                                                                                );
+                                                                                            })
+                                                                                    )}
+                                                                                </tr>
+                                                                            </>
+                                                                        )
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     )
                                                 })
                                         )
