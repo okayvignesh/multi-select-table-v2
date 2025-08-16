@@ -3,9 +3,11 @@ import { useEffect, useRef } from 'react';
 import { MdRefresh, MdOutlineFileDownload } from "react-icons/md";
 import { exportToExcel, exportToSummaryExcel } from '../utils/Functions';
 import axios from 'axios';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 // import ServiceCallsUtil from '../util/ServiceCallsUtil';
 
-function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates, dynamicHeaderMap, fetchRowData, setApiStatus, showModal, apiStatus }) {
+function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryWTB, aos, fsi, gbi, tillDates, dynamicHeaderMap, fetchRowData, setApiStatus, showModal, apiStatus, setAlertMsgs }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const modalRef = useRef(null);
@@ -57,14 +59,84 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                 timestamp: "Empty response from timestamp API"
             }));
         } else {
-            setData(data[0]);
+            if(typeof data == 'string'){
+                const alertString = 'Timestamp: ' +  data;
+                setAlertMsgs((prev) => [...prev, alertString]);
+            }else{
+                setData(data[0]);
+            }
         }
     }
 
 
-    const handleDownloadPDF = () => {
-        window.print();
-    }
+    const handlePdfExport = async () => {
+        const loader = document.createElement("div");
+        loader.className = "export-loader";
+        loader.innerHTML = `
+          <div class="loader-content">
+            <div class="spinner"></div>
+            <span class="loader-text">Downloading...</span>
+          </div>
+        `;
+        document.body.appendChild(loader);
+      
+        try {
+          document.body.click();
+          const table = document.getElementById('scrollable-table');
+          if (!table) return;
+      
+          const prevOverflowY = table.style.overflowY;
+          const prevHeight = table.style.height;
+      
+          table.style.overflowY = "visible";
+          table.style.height = "auto";
+      
+          const footer = document.getElementById('footer');
+          footer.style.position = 'relative';
+      
+          const mainBody = document.getElementById('main-body');
+      
+          const canvas = await html2canvas(mainBody, {
+            scale: 1,
+            useCORS: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight,
+          });
+      
+          table.style.overflowY = prevOverflowY;
+          table.style.height = prevHeight;
+          footer.style.position = 'fixed';
+      
+          const imgData = canvas.toDataURL("image/png");
+      
+          const pdf = new jsPDF("p", "mm", "a4");
+      
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+          let heightLeft = pdfHeight;
+          let position = 0;
+      
+          pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+          heightLeft -= pdf.internal.pageSize.getHeight();
+      
+          while (heightLeft > 0) {
+            position = heightLeft - pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight();
+          }
+      
+          pdf.save("page.pdf");
+        } finally {
+          document.body.removeChild(loader);
+        }
+      };
+      
+
 
     const handleExcelExport = () => {
         if (activeTab === 'summary') {
@@ -80,8 +152,59 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                 dynamicHeaderMap
             })
         }
+       document.body.click();
     }
 
+    const handleImageExport = async () => {
+        const loader = document.createElement("div");
+        loader.className = "export-loader";
+        loader.innerHTML = `
+          <div class="loader-content">
+            <div class="spinner"></div>
+            <span class="loader-text">Downloading...</span>
+          </div>
+        `;
+        document.body.appendChild(loader);
+      
+        try {
+          document.body.click();
+          const table = document.getElementById('scrollable-table');
+          if (!table) return;
+      
+          const prevOverflowY = table.style.overflowY;
+          const prevHeight = table.style.height;
+      
+          table.style.overflowY = "visible";
+          table.style.height = "auto";
+      
+          const footer = document.getElementById('footer');
+          footer.style.position = 'relative';
+      
+          const mainBody = document.getElementById('main-body');
+      
+          const canvas = await html2canvas(mainBody, {
+            scale: 2,
+            useCORS: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: document.documentElement.scrollWidth,
+            windowHeight: document.documentElement.scrollHeight,
+          });
+      
+          table.style.overflowY = prevOverflowY;
+          table.style.height = prevHeight;
+          footer.style.position = 'fixed';
+      
+          const imgData = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
+          link.href = imgData;
+          link.download = "page.png";
+          link.click();
+        } finally {
+          document.body.removeChild(loader);
+        }
+      };
+      
     function getTimeDifferenceFromPST(pstTimestampStr) {
         if (!pstTimestampStr) return '';
         const [day, mon, yearAndTime] = pstTimestampStr.split('-');
@@ -119,7 +242,7 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
 
 
     return (
-        <footer className="footer">
+        <footer className="footer" id='footer'>
             {
                 loading ? <p>loading..</p>
                     :
@@ -177,7 +300,13 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
                                 </li>
                                 <li>
                                     <a className="dropdown-item"
-                                        onClick={() => handleDownloadPDF()}>
+                                        onClick={() => handleImageExport()}>
+                                        <span>Image</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item"
+                                        onClick={() => handlePdfExport()}>
                                         <span>PDF</span>
                                     </a>
                                 </li>

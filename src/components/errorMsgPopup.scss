@@ -1,0 +1,34 @@
+.errorMsg-popup {
+
+	padding: 1rem;
+  	position: absolute;
+  	z-index: 1000;
+  	border-radius: 4px;
+  	opacity: .8;
+	background-color: #F97B8B;
+	align-items: center;
+  	// @include set-background(#F97B8B);
+  	// @include set-flex($alignItems: center);
+	.errorIcon {
+		color: black;
+		margin-right: .5rem;
+		font-size: 1.3rem;
+	}
+	.errorMsg-popup-text {
+		// @include set-text($color: black, $fontSize: .8, $fontFamily: Regular, $whiteSpace: normal);
+		color: black;
+		font-size: 12px;
+	}
+}
+
+.blinking {
+	animation: blinkingAnimation 2s steps(5, start) infinite;
+}
+
+@keyframes blinkingAnimation {
+	0% {opacity: 0;}
+	25% {opacity: 0.5;}
+	50% {opacity: 1;}
+	75% {opacity: 0.55;}
+	100% {opacity: 0;}
+}

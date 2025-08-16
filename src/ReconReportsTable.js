@@ -7,6 +7,7 @@ import MainBody from './components/MainBody';
 import SecondaryHeader from './components/SecondaryHeader';
 import { transformBagData } from "./utils/Functions"
 import ErrorModal from './components/ErrorModal';
+import ErrorMsgPopup from './components/ErrorMsgPopup';
 // import ServiceCallsUtil from './util/ServiceCallsUtil';
 // import Constants from './util/Constants';
 
@@ -38,6 +39,7 @@ function ReconReportsTable() {
   const modalRef = useRef(null);
   const isTabChangeRef = useRef(false);
   const isResetRef = useRef(false);
+  const [alertMsgs, setAlertMsgs] = useState([]);
 
 
   const fetchRowData = () => {
@@ -73,7 +75,7 @@ function ReconReportsTable() {
     //                 transformBagData({ data: responses[0].response, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap })
     //                 //console.log("sk as response",responses[0].response);
     //                 //decrementLoading()
-    //                 setLoading(false)
+    //                 setLoading(false);
     // });
 
     axios.get('https://7kyd3.wiremockapi.cloud/rowdata')
@@ -105,7 +107,21 @@ function ReconReportsTable() {
         rowdata: "Empty response from rowdata API"
       }));
     } else {
-      transformBagData({ data, setFilteredData, setTotalData, setTillDateOptions, setSummaryWTB, setDynamicHeaderMap, appliedItems, setDayDescMap })
+      if (typeof data == "string") {
+        const alertMessage = activeTab + ' : ' + data 
+        setAlertMsgs((prev) => [...prev, alertMessage]);
+      } else {
+        transformBagData({
+          data,
+          setFilteredData,
+          setTotalData,
+          setTillDateOptions,
+          setSummaryWTB,
+          setDynamicHeaderMap,
+          appliedItems,
+          setDayDescMap,
+        });
+      }
     }
   }
 
@@ -132,7 +148,7 @@ function ReconReportsTable() {
   }, [appliedFilters.filter2])
 
   return (
-    <div>
+    <div id='main-body'>
       <div className="position-sticky" style={{ top: '0', zIndex: '3', backgroundColor: 'white' }}>
         <Header dateOptions={dateOptions} setDateOptions={setDateOptions}
           appliedFilters={appliedFilters} setAppliedFilters={setAppliedFilters}
@@ -146,8 +162,20 @@ function ReconReportsTable() {
       <MainBody activeTab={activeTab} dateOptions={dateOptions} loading={loading} filteredData={filteredData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} setAos={setAos} setFsi={setFsi} setGbi={setGbi} apiStatus={apiStatus}
         appliedFilters={appliedFilters} countries={countries} waysToBuy={waysToBuy} totalData={totalData} tillDates={tillDates} differenceToggle={differenceToggle} setDifferenceToggle={setDifferenceToggle} dynamicHeaderMap={dynamicHeaderMap} />
       <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap}
-        fetchRowData={fetchRowData} setApiStatus={setApiStatus} showModal={showModal} apiStatus={apiStatus} />
-      <ErrorModal modalRef={modalRef} apiStatus={apiStatus} />
+        fetchRowData={fetchRowData} setApiStatus={setApiStatus} showModal={showModal} apiStatus={apiStatus} setAlertMsgs={setAlertMsgs}/>
+      {/* <ErrorModal modalRef={modalRef} apiStatus={apiStatus} /> */}
+      {alertMsgs.map((msg, index) => (
+        <ErrorMsgPopup
+          key={index}
+          errorMsg={msg}
+          blinking={true}
+          position={{
+            bottom: `${(index + 1) * 5}rem`,
+            right: "0.5rem",
+            position: "fixed"
+          }}
+        />
+      ))}
     </div>
   );
 }

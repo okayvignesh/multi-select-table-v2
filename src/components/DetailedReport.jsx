@@ -224,7 +224,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                         </tbody>
                                     </table>
                                 </div>
-                                <div className="col-7 right-table" ref={rightRef} onScroll={() =>
+                                <div className="col-7 right-table" ref={rightRef} id="scrollable-table" onScroll={() =>
                                     handleScroll(rightRef.current, leftRef.current)
                                 }>
                                     {

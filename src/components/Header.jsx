@@ -32,6 +32,16 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
     //                 //const result = responses[0].response;
 
     //                 //console.log("sk as response",responses);
+
+    // setting alert messages - uncomment this
+    // if (typeof responses[0].response == "string") {
+    //   const alertString = "Geo Dropdown: " + data;
+    //   setAlertMsgs((prev) => [...prev, alertString]);
+    // } else {
+    //   setData(responses[0].response[0]);
+    // }
+
+
     //                 extractData(responses[0].response, setCountries, setWaysToBuy, setDateOptions);
     //                 setLoading(false);
     // });

@@ -233,7 +233,7 @@ function AllWays({ totalData, filteredData, loading, tillDates, allFlag, summary
                                      </div>
                                  )}
 
-                                <div className="col-10 right-table" style={{ height: 'fit-content' }}>
+                                <div className="col-10 right-table" id='scrollable-table' style={{ height: 'fit-content' }}>
                                     {
                                         !allFlag && (!totalData.selective || Object.keys(totalData.selective).length === 0) ? (
                                             <div className="d-flex justify-content-center align-items-center " style={{ height: '200px', width: '100%', textAlign: 'center', marginLeft: '20%' }}>
