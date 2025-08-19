@@ -36,7 +36,10 @@ function Header({ dateOptions, setDateOptions, appliedFilters, setAppliedFilters
     // setting alert messages - uncomment this
     // if (typeof responses[0].response == "string") {
     //   const alertString = "Geo Dropdown: " + data;
-    //   setAlertMsgs((prev) => [...prev, alertString]);
+      // setAlertMsgs((prev) => ({
+      //   ...prev,
+      //   ['Geo Dropdown']: alertString,
+      // }));
     // } else {
     //   setData(responses[0].response[0]);
     // }

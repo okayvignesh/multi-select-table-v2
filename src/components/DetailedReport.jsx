@@ -130,7 +130,7 @@ function DetailedReport({ appliedFilters, loading, filteredData, tillDates, aos,
                                         </thead>
                                         <tbody>
                                             {
-                                                filteredData &&
+                                                filteredData && filteredData[0] && 
                                                 //filteredData.find((e) => e.date === appliedFilters.filter2)?.data.map((i, index) => {
                                                 filteredData[0].data.map((i, index) => {
                                                     return (

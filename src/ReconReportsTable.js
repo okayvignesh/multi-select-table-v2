@@ -39,7 +39,7 @@ function ReconReportsTable() {
   const modalRef = useRef(null);
   const isTabChangeRef = useRef(false);
   const isResetRef = useRef(false);
-  const [alertMsgs, setAlertMsgs] = useState([]);
+  const [alertMsgs, setAlertMsgs] = useState({});
 
 
   const fetchRowData = () => {
@@ -69,6 +69,8 @@ function ReconReportsTable() {
         'As Of': [appliedFilters.filter2]
       }
     }]
+
+    clearTabChangeErrors();
     // ServiceCallsUtil.fireServiceCalls(serviceCalls, (responses) => {
     //                 //const result = responses[0].response;
     //                 //transformBagData(responses[0].response);
@@ -78,7 +80,11 @@ function ReconReportsTable() {
     //                 setLoading(false);
     // });
 
-    axios.get('https://7kyd3.wiremockapi.cloud/rowdata')
+
+    // can ignore this as this is only for axios
+    const url = activeTab == "summary" ? 'https://7kyd3.wiremockapi.cloud/rowdata/4' : 'https://7kyd3.wiremockapi.cloud/rowdata/11'
+
+    axios.get(url)
       .then(response => processData(response.data.result))
       .catch(error => {
         let message = "Unknown error";
@@ -109,7 +115,10 @@ function ReconReportsTable() {
     } else {
       if (typeof data == "string") {
         const alertMessage = activeTab + ' : ' + data 
-        setAlertMsgs((prev) => [...prev, alertMessage]);
+        setAlertMsgs((prev) => ({
+          ...prev,
+          [activeTab]: alertMessage,
+        }));
       } else {
         transformBagData({
           data,
@@ -145,8 +154,22 @@ function ReconReportsTable() {
     }
 
     fetchRowData();
-  }, [appliedFilters.filter2])
+  }, [appliedFilters.filter2]);
 
+
+
+  const clearTabChangeErrors = () => {
+    setAlertMsgs((prev) => {
+      if (!prev) return prev;
+  
+      const newMsgs = { ...prev };
+      delete newMsgs["summary"];
+      delete newMsgs["detailed"];
+  
+      return newMsgs;
+    });
+  };
+  
   return (
     <div id='main-body'>
       <div className="position-sticky" style={{ top: '0', zIndex: '3', backgroundColor: 'white' }}>
@@ -164,10 +187,10 @@ function ReconReportsTable() {
       <Footer filteredData={filteredData} differenceToggle={differenceToggle} activeTab={activeTab} totalData={totalData} summaryWTB={summaryWTB} aos={aos} fsi={fsi} gbi={gbi} tillDates={tillDates} dynamicHeaderMap={dynamicHeaderMap}
         fetchRowData={fetchRowData} setApiStatus={setApiStatus} showModal={showModal} apiStatus={apiStatus} setAlertMsgs={setAlertMsgs}/>
       {/* <ErrorModal modalRef={modalRef} apiStatus={apiStatus} /> */}
-      {alertMsgs.map((msg, index) => (
+      {Object.entries(alertMsgs) && Object.entries(alertMsgs).map(([key, value], index) => (
         <ErrorMsgPopup
           key={index}
-          errorMsg={msg}
+          errorMsg={value}
           blinking={true}
           position={{
             bottom: `${(index + 1) * 5}rem`,

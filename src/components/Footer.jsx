@@ -61,7 +61,10 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
         } else {
             if(typeof data == 'string'){
                 const alertString = 'Timestamp: ' +  data;
-                setAlertMsgs((prev) => [...prev, alertString]);
+                setAlertMsgs((prev) => ({
+                    ...prev,
+                    ['Timestamp']: alertString,
+                  }));
             }else{
                 setData(data[0]);
             }
