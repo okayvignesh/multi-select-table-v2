@@ -198,11 +198,21 @@ function Footer({ filteredData, differenceToggle, activeTab, totalData, summaryW
           table.style.height = prevHeight;
           footer.style.position = 'fixed';
       
-          const imgData = canvas.toDataURL("image/png");
-          const link = document.createElement("a");
-          link.href = imgData;
-          link.download = "page.png";
-          link.click();
+        //   const imgData = canvas.toDataURL("image/png");
+        //   const link = document.createElement("a");
+        //   link.href = imgData;
+        //   link.download = "page.png";
+        //   link.click();
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "page.png";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, "image/png");
         } finally {
           document.body.removeChild(loader);
         }
